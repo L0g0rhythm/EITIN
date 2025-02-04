@@ -215,7 +215,7 @@ $softwares | ForEach-Object {
 }
 Add-Content -Path $filename -Value ""
 
-# [MEC] – Informações do produto (Modelo, Fabricante, e, para Dell, exibe a Service Tag).
+# [MAC] – Informações do produto (Modelo, Fabricante, e, para Dell, exibe a Service Tag).
 Add-Content -Path $filename -Value "[MEC]"
 $mec = Get-CimInstance -ClassName Win32_ComputerSystemProduct
 Add-Content -Path $filename -Value "Modelo: $($mec.Name)"
