@@ -337,5 +337,15 @@ if (Get-Command -Name Get-ADComputer -ErrorAction SilentlyContinue) {
 }
 Add-Content -Path $filename -Value ""
 
+# [GRAPHIC CARD] - Information about the graphic card.
+Add-Content -Path $filename -Value "[GRAPHIC CARD]"
+$gpu = Get-CimInstance Win32_VideoController
+foreach ($g in $gpu) {
+    Add-Content -Path $filename -Value "Name: $($g.Name)"
+    Add-Content -Path $filename -Value "Driver Version: $($g.DriverVersion)"
+    Add-Content -Path $filename -Value "Video Processor: $($g.VideoProcessor)"
+    Add-Content -Path $filename -Value ""
+}
+
 # Final message displayed on the console.
 Write-Host "Report generated at: $filename"
