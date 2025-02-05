@@ -24,7 +24,8 @@ This repository contains a PowerShell script (.ps1) and a Batch file (.bat) that
 1. **Prerequisites:**  
    - Windows 8+ or higher (including Windows Server 2012 or later) with PowerShell enabled.  
    - Administrative permissions to run the scripts.  
-   - Execution policy configured to allow the use of the Bypass parameter.  
+   - Execution policy configured to allow the use of the Bypass parameter.
+ 
 
 2. **Steps:**  
    - Clone the repository or download the files:  
@@ -63,7 +64,9 @@ The generated report includes the following sections:
 - **[BIOS & FIRMWARE]:** BIOS versions, release date, and chassis information.  
 - **[MONITORS]:** Data on monitors connected via WMI, with byte array decoding.  
 - **[WINDOWS UPDATES]:** History of the last 10 installed updates, categorized as quality updates, drivers, definitions, or others.  
-- **[ACTIVE DIRECTORY]:** If available, collects the computer's DistinguishedName in AD.  
+- **[ACTIVE DIRECTORY]:** If available, collects the computer's DistinguishedName in AD.
+- **[GRAPHIC CARD]:** Information about the graphic card.
+- **[FIREWALL STATUS]:** Firewall status check.
 
 ---
 
@@ -72,6 +75,7 @@ The generated report includes the following sections:
 - **Operating System:** Windows 8+ or higher (including Windows Server 2012 or later).  
 - **PowerShell:** Version that supports script execution and the `-ExecutionPolicy Bypass` parameter.  
 - **Administrative Permissions:** Required to access all system information.
+- **Windows PowerShell** 5.1 or later. 
 
 ---
 
