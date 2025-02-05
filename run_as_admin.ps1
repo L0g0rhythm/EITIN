@@ -347,5 +347,13 @@ foreach ($g in $gpu) {
     Add-Content -Path $filename -Value ""
 }
 
+# Verificação de status do firewall
+Add-Content -Path $filename -Value "[FIREWALL STATUS]"
+$firewallStatus = Get-NetFirewallProfile -Profile Domain,Public,Private
+foreach ($profile in $firewallStatus) {
+    Add-Content -Path $filename -Value "$($profile.Name): $($profile.Enabled)"
+}
+Add-Content -Path $filename -Value ""
+
 # Final message displayed on the console.
 Write-Host "Report generated at: $filename"
