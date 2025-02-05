@@ -22,7 +22,7 @@ This repository contains a PowerShell script (.ps1) and a Batch file (.bat) that
 ## 🚀 How to Use
 
 1. **Prerequisites:**  
-   - Windows 8+ or higher (including Windows Server 2012 or later) with PowerShell enabled.  
+   - Windows 8 or later (including Windows Server 2012 or newer). with PowerShell enabled.
    - Administrative permissions to run the scripts.  
    - Execution policy configured to allow the use of the Bypass parameter.
  
@@ -72,10 +72,10 @@ The generated report includes the following sections:
 
 ## ⚠️ Requirements
 
-- **Operating System:** Windows 8+ or higher (including Windows Server 2012 or later).  
-- **PowerShell:** Version that supports script execution and the `-ExecutionPolicy Bypass` parameter.  
+- **Operating System:** Windows 8 or later (including Windows Server 2012 or newer).  
+- **PowerShell:** Version compatible with script execution and support for the -ExecutionPolicy Bypass parameter.  
 - **Administrative Permissions:** Required to access all system information.
-- **Windows PowerShell** 5.1 or later. 
+- **PowerShell Version:** Windows PowerShell 5.1 or later. 
 
 ---
 
