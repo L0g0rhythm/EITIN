@@ -347,7 +347,7 @@ foreach ($g in $gpu) {
     Add-Content -Path $filename -Value ""
 }
 
-# Verificação de status do firewall
+# Firewall status check
 Add-Content -Path $filename -Value "[FIREWALL STATUS]"
 $firewallStatus = Get-NetFirewallProfile -Profile Domain,Public,Private
 foreach ($profile in $firewallStatus) {
