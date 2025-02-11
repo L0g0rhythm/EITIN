@@ -20,16 +20,26 @@ Add-Content -Path $filename -Value ""
 # Starts the identification section, displaying the computer name and listing active users.
 Add-Content -Path $filename -Value "[IDENTIFICATION]"
 Add-Content -Path $filename -Value "Computer Name: $env:COMPUTERNAME"
+
+# Listed created users.
 Add-Content -Path $filename -Value "Created Users:"
+
+# Adds the user that is executing the script.
+Add-Content -Path $filename -Value "User Executing the Script: $env:USERNAME"
 
 # Gets the active local users (not disabled) and ignores unwanted default accounts.
 $users = Get-WmiObject Win32_UserAccount | Where-Object { 
     $_.LocalAccount -eq $true -and $_.Disabled -eq $false -and $_.Name -notmatch '^(Administrator|DefaultAccount|Guest|WDAGUtilityAccount)$'
 }
+
+# Filters out the current user to prevent duplication in the list of users.
+$filteredUsers = $users | Where-Object { $_.Name -ne $env:USERNAME }
+
 # For each filtered user, writes the name to the file.
-$users | ForEach-Object { 
+$filteredUsers | ForEach-Object { 
     Add-Content -Path $filename -Value $_.Name 
 }
+
 Add-Content -Path $filename -Value ""
 
 # [OPERATING SYSTEM]
