@@ -59,15 +59,32 @@ Add-Content -Path $filename -Value "Product: $($winSpec.ProductName)"
 Add-Content -Path $filename -Value "Edition: $($winSpec.EditionID)"
 Add-Content -Path $filename -Value "Version: $($winSpec.CurrentVersion) (Build $($winSpec.CurrentBuild))"
 
-# Installation date handling
-if ($os.InstallDate -and $os.InstallDate -match '^\d{14}\.\d{6}[\+\-]\d{3}$') {
+# Get the operating system object to retrieve installation date
+$os = Get-WmiObject Win32_OperatingSystem
+$installDate = $os.InstallDate
+
+if ($installDate) {
     try {
-        $installDate = [Management.ManagementDateTimeConverter]::ToDateTime($os.InstallDate)
-        Add-Content -Path $filename -Value "Installation Date: $installDate"
+        # Extract the date and time part (yyyyMMddHHmmss) from the InstallDate
+        $installDateString = $installDate.Substring(0, 14)
+
+        # Convert the installation date to DateTime format
+        $installDateParsed = [datetime]::ParseExact($installDateString, 'yyyyMMddHHmmss', $null)
+
+        # Format the installation date to day/month/year (dd/MM/yyyy)
+        $installDateFormatted = $installDateParsed.ToString("dd/MM/yyyy")
+
+        # Display the formatted installation date in console and write it to the file
+        Write-Host "Installation Date: $installDateFormatted"
+        Add-Content -Path $filename -Value "Installation Date: $installDateFormatted"
     } catch {
+        # Handle any errors that may occur during the conversion process
+        Write-Host "Installation Date: Conversion Error"
         Add-Content -Path $filename -Value "Installation Date: Conversion Error"
     }
 } else {
+    # Handle case where the installation date is not available
+    Write-Host "Installation Date: Not Available"
     Add-Content -Path $filename -Value "Installation Date: Not Available"
 }
 
