@@ -200,15 +200,23 @@ foreach ($disk in $disks) {
 
 # Disk space report by volume.
 Add-Content -Path $filename -Value 'Space by Drive (Volumes):'
-$volumes = Get-Volume | Where-Object { $_.FileSystem -ne $null }
+
+$volumes = Get-Volume | Where-Object { $_.FileSystem -ne $null -and $_.DriveLetter -ne $null }
+
 foreach ($volume in $volumes) {
+    # Calculate total, used, and available space in GB and round to 2 decimal places.
     $total = [math]::round($volume.Size / 1GB, 2)
     $used = [math]::round(($volume.Size - $volume.SizeRemaining) / 1GB, 2)
     $available = [math]::round($volume.SizeRemaining / 1GB, 2)
-    # Formats the message with drive, total, used, and available.
-    $message = "Drive {0}: Total: {1} GB `| Used: {2} GB `| Available: {3} GB" -f $volume.DriveLetter, $total, $used, $available
-    Add-Content -Path $filename -Value $message
+
+    # Only include drives with letters and a minimum total size of 1 GB to filter out small or unimportant drives.
+    if ($total -gt 0.1) {
+        # Format the message with drive letter, total, used, and available space in GB
+        $message = "Drive {0}: Total: {1} GB | Used: {2} GB | Available: {3} GB" -f $volume.DriveLetter, $total, $used, $available
+        Add-Content -Path $filename -Value $message
+    }
 }
+
 Add-Content -Path $filename -Value ""
 
 # [NETWORK] – Network information.
