@@ -155,6 +155,7 @@ $memory | ForEach-Object {
 
 # [STORAGE] - Information on physical disks (SSD, HDD, or USB Drive).
 Add-Content -Path $filename -Value "[STORAGE]"
+
 $disks = Get-PhysicalDisk
 foreach ($disk in $disks) {
     # Determines the media type based on the MediaType value.
@@ -162,25 +163,41 @@ foreach ($disk in $disks) {
         3 { "HDD" }
         4 { "SSD" }
         default {
-            if ($disk.Model -match "USB" -or $disk.FriendlyName -match "USB" -or $disk.DeviceID -match "USB" -or $disk.Model -match "Cruzer|Flash|Thumb|Stick|Pen|Drive") {
+            # Detects NVMe SSDs by checking for the term 'NVMe' in the model or friendly name
+            if ($disk.Model -match "NVMe" -or $disk.FriendlyName -match "NVMe") {
+                "SSD NVMe"
+            }
+            # Detects USB drives based on model, friendly name, or device ID
+            elseif ($disk.Model -match "USB" -or $disk.FriendlyName -match "USB" -or $disk.DeviceID -match "USB" -or $disk.Model -match "Cruzer|Flash|Thumb|Stick|Pen|Drive") {
                 "USB Drive"
-            } elseif ($disk.Model -match "SSD" -or $disk.FriendlyName -match "SSD") {
+            }
+            # Detects SSDs
+            elseif ($disk.Model -match "SSD" -or $disk.FriendlyName -match "SSD") {
                 "SSD"
-            } elseif ($disk.Model -match "HDD" -or $disk.FriendlyName -match "HDD") {
+            }
+            # Detects HDDs
+            elseif ($disk.Model -match "HDD" -or $disk.FriendlyName -match "HDD") {
                 "HDD"
             } else {
                 "Unknown"
             }
         }
     }
+    
+    # Logs the disk's friendly name
     Add-Content -Path $filename -Value "Drive: $($disk.FriendlyName)"
+    # Logs the type of disk (SSD, HDD, NVMe, or USB Drive)
     Add-Content -Path $filename -Value "Type: $media"
+    
     # Displays the serial number if available.
     if ($disk.SerialNumber) {
         Add-Content -Path $filename -Value "Serial: $($disk.SerialNumber)"
     }
+    
+    # Add a newline to separate each disk's information
     Add-Content -Path $filename -Value ""
 }
+
 # Disk space report by volume.
 Add-Content -Path $filename -Value 'Space by Drive (Volumes):'
 $volumes = Get-Volume | Where-Object { $_.FileSystem -ne $null }
