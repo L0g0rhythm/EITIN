@@ -390,5 +390,32 @@ foreach ($profile in $firewallStatus) {
 }
 Add-Content -Path $filename -Value ""
 
+# Antivirus handling
+$antivirusList = Get-WmiObject -Namespace "root\SecurityCenter2" -Class AntiVirusProduct
+
+# Check Windows Defender status
+$defenderStatus = Get-Service -Name "WinDefend"
+if ($defenderStatus.Status -eq "Running") {
+    Add-Content -Path $filename -Value "Antivirus: Windows Defender"
+    Add-Content -Path $filename -Value "Status: Active"
+} else {
+    Add-Content -Path $filename -Value "Antivirus: Windows Defender"
+    Add-Content -Path $filename -Value "Status: Inactive"
+}
+
+# Check for third-party antivirus (like Kaspersky)
+foreach ($av in $antivirusList) {
+    # We check for a third-party antivirus that is not Windows Defender
+    if ($av.displayName -ne "Windows Defender") {
+        if ($av.productState -match ".*(397568).*") {  # 397568 means antivirus is active
+            Add-Content -Path $filename -Value "Antivirus: $($av.displayName)"
+            Add-Content -Path $filename -Value "Status: Active"
+        } else {
+            # If we can't verify the antivirus status, we mention that it might be active, but cannot confirm
+            Add-Content -Path $filename -Value "Antivirus: $($av.displayName) (Status: Unable to Verify)"
+        }
+    }
+}
+
 # Final message displayed on the console.
 Write-Host "Report generated at: $filename"
