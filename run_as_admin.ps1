@@ -593,4 +593,6 @@ try {
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # Final message displayed on the console.
-Write-Host "Report generated at: $filename"
+Write-Host "The system report has been successfully generated and saved at:" -ForegroundColor Green
+Write-Host $filename -ForegroundColor Yellow
+
