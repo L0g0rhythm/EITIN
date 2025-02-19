@@ -1,6 +1,6 @@
-**IT Inventory with Privilege Elevation**
+# IT Inventory with Privilege Elevation
 
-This repository contains a PowerShell script (run_as_admin.ps1) that automates the collection of detailed system information for IT inventory purposes. The goal is to streamline asset management by ensuring that the report is generated with elevated privileges.
+This repository contains a PowerShell script (`run_as_admin.ps1`) that automates the collection of detailed system information for IT inventory purposes. The goal is to streamline asset management by ensuring that the report is generated with elevated privileges.
 
 ### 📋 Overview
 
@@ -23,7 +23,7 @@ The PowerShell script collects a comprehensive set of system data, including:
 - **Operating System**: Windows 7 or later (including Windows Server 2012 or later versions).
 - **PowerShell**: Version 2 or higher (recommended).
 - **Administrative Permissions**: Required to run the script (in case of failure).
-- **PowerShell Execution Policy**: Ensure the execution policy allows the use of `-ExecutionPolicy Bypass`. After running, it is recommended to adjust the policy to a more secure level.
+- **PowerShell Execution Policy**: Ensure the execution policy allows the use of `-ExecutionPolicy Bypass`. After running, it is recommended to adjust the policy to a more secure level.  (e.g., `Set-ExecutionPolicy RemoteSigned`)
 
 **Steps**:
 
