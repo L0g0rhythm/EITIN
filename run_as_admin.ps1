@@ -117,6 +117,8 @@ Add-Content -Path $filename -Value "" -Encoding UTF8
 # Collects information from each physical memory module installed.
 Add-Content -Path $filename -Value "[RAM MEMORY]" -Encoding UTF8
 $memory = Get-CimInstance Win32_PhysicalMemory
+
+# Iterating through each memory module and collecting relevant information
 $memory | ForEach-Object {
     # Converts the numeric memory type code to a readable string (DDR, DDR2, etc.).
     $ddr = switch ($_.SMBIOSMemoryType) {
@@ -128,11 +130,27 @@ $memory | ForEach-Object {
         34 { 'DDR5' }
         default { 'Unknown' }
     }
-    Add-Content -Path $filename -Value "Manufacturer: $($_.Manufacturer)" -Encoding UTF8
-    Add-Content -Path $filename -Value "Capacity: $([math]::round($_.Capacity / 1GB, 2)) GB" -Encoding UTF8
-    Add-Content -Path $filename -Value "Speed: $($_.Speed) MHz" -Encoding UTF8
-    Add-Content -Path $filename -Value "Type: $ddr" -Encoding UTF8
-    Add-Content -Path $filename -Value "" -Encoding UTF8
+
+    # Safely checks if the values exist before adding them to the report.
+    $manufacturer = if ($_.Manufacturer) { $_.Manufacturer } else { 'Unknown' }
+    $partNumber = if ($_.PartNumber) { $_.PartNumber } else { 'Unknown' }
+    $serialNumber = if ($_.SerialNumber) { $_.SerialNumber } else { 'Unknown' }
+    $capacity = if ($_.Capacity) { [math]::round($_.Capacity / 1GB, 2) } else { 'Unknown' }
+    $speed = if ($_.Speed) { $_.Speed } else { 'Unknown' }
+
+    # Consolidates the data into one entry for each memory module.
+    $memoryDetails = @(
+        "Manufacturer: $manufacturer"
+        "Part Number: $partNumber"
+        "Serial Number: $serialNumber"
+        "Capacity: $capacity GB"
+        "Speed: $speed MHz"
+        "Type: $ddr"
+        ""
+    )
+
+    # Adds all collected information to the file in a single write operation.
+    Add-Content -Path $filename -Value $memoryDetails -Encoding UTF8
 }
 
 # [STORAGE] - Information on physical disks (SSD, HDD, or USB Drive).
