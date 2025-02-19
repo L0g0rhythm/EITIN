@@ -312,15 +312,27 @@ Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [INSTALLED SOFTWARES] – List of installed applications (excluding Microsoft ones).
 Add-Content -Path $filename -Value "[INSTALLED SOFTWARES]" -Encoding UTF8
-$apps1 = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | 
+
+# Getting 64-bit and 32-bit installed applications excluding Microsoft ones.
+$apps1 = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue |
     Where-Object { $_.DisplayName -and $_.DisplayName -notmatch "Microsoft" }
-$apps2 = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | 
+$apps2 = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue |
     Where-Object { $_.DisplayName -and $_.DisplayName -notmatch "Microsoft" }
+
 # Merges the two lists (64-bit and 32-bit applications).
 $softwares = $apps1 + $apps2
-$softwares | ForEach-Object {
-    Add-Content -Path $filename -Value "$($_.DisplayName) - Version: $($_.DisplayVersion)" -Encoding UTF8
+
+# Checks if any software is found and then writes it to the file.
+if ($softwares) {
+    $softwares | ForEach-Object {
+        # Check if DisplayVersion exists to avoid null values
+        $version = if ($_.DisplayVersion) { $_.DisplayVersion } else { "N/A" }
+        Add-Content -Path $filename -Value "$($_.DisplayName) - Version: $version" -Encoding UTF8
+    }
+} else {
+    Add-Content -Path $filename -Value "No non-Microsoft software found." -Encoding UTF8
 }
+
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [MAC] – Product information (Model, Manufacturer, and for Dell, displays the Service Tag).
