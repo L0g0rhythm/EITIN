@@ -9,12 +9,14 @@ if (Test-Path $filename) {
     Remove-Item $filename 
 }
 
-# Report header.
-# Adds separation lines, title with date/time, and a blank line for better formatting.
-Add-Content -Path $filename -Value "==============================="
-Add-Content -Path $filename -Value "IT INVENTORY - $(Get-Date)"
-Add-Content -Path $filename -Value "==============================="
-Add-Content -Path $filename -Value ""
+# Adds the header in a single call.
+$header = @"
+===============================
+IT INVENTORY - $(Get-Date)
+===============================
+
+"@
+Add-Content -Path $filename -Value $header
 
 # [IDENTIFICATION]
 # Starts the identification section, displaying the computer name and listing active users.
