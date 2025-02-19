@@ -31,8 +31,12 @@ if ($activeUsers) {
     Add-Content -Path $filename -Value "Active Users: None"
 }
 
-# Adds the user that is executing the script.
-Add-Content -Path $filename -Value "User Executing the Script: $env:USERNAME"
+# Checks if the USERNAME environment variable exists before adding it to the file
+if ($env:USERNAME) {
+    Add-Content -Path $filename -Value "User Executing the Script: $env:USERNAME"
+} else {
+    Add-Content -Path $filename -Value "User Executing the Script: Unknown"
+}
 
 # Listed created users.
 Add-Content -Path $filename -Value "Created Users:"
