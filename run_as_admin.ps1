@@ -122,28 +122,6 @@ if ($installDate) {
     Add-Content -Path $filename -Value "Installation Date: Not Available" -Encoding UTF8
 }
 
-# Last boot handling
-if ($os.LastBootUpTime -and $os.LastBootUpTime -match '^\d{14}\.\d{6}[\+\-]\d{3}$') {
-    try {
-        # Convert the LastBootUpTime to DateTime format
-        $lastBoot = [Management.ManagementDateTimeConverter]::ToDateTime($os.LastBootUpTime)
-
-        # Format the date to day/month/year (dd/MM/yyyy)
-        $lastBootFormatted = $lastBoot.ToString("dd/MM/yyyy")
-
-        # Write the formatted result to the file
-        Add-Content -Path $filename -Value "Last Boot: $lastBootFormatted" -Encoding UTF8
-    } catch {
-        # Handle any errors that may occur during the conversion process
-        Add-Content -Path $filename -Value "Last Boot: Conversion Error" -Encoding UTF8
-    }
-} else {
-    # Handle case where the last boot time is not available
-    Add-Content -Path $filename -Value "Last Boot: Not Available" -Encoding UTF8
-}
-
-Add-Content -Path $filename -Value "" -Encoding UTF8
-
 # [EQUIPMENT TYPE]
 # Determines if the equipment is Desktop or Notebook based on the PCSystemType property.
 Add-Content -Path $filename -Value "[EQUIPMENT TYPE]" -Encoding UTF8
