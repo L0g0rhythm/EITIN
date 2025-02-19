@@ -554,32 +554,43 @@ try {
 
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
-# Antivirus handling
-$antivirusList = Get-WmiObject -Namespace "root\SecurityCenter2" -Class AntiVirusProduct
+# [ANTIVIRUS STATUS] - Check status of Windows Defender and third-party antivirus
+Add-Content -Path $filename -Value "[ANTIVIRUS STATUS]" -Encoding UTF8
 
-# Check Windows Defender status
-$defenderStatus = Get-Service -Name "WinDefend"
-if ($defenderStatus.Status -eq "Running") {
-    Add-Content -Path $filename -Value "Antivirus: Windows Defender" -Encoding UTF8
-    Add-Content -Path $filename -Value "Status: Active" -Encoding UTF8
-} else {
-    Add-Content -Path $filename -Value "Antivirus: Windows Defender" -Encoding UTF8
-    Add-Content -Path $filename -Value "Status: Inactive" -Encoding UTF8
-}
+try {
+    # Check Windows Defender status
+    $defenderStatus = Get-Service -Name "WinDefend" -ErrorAction SilentlyContinue
+    if ($defenderStatus -and $defenderStatus.Status -eq "Running") {
+        Add-Content -Path $filename -Value "Antivirus: Windows Defender" -Encoding UTF8
+        Add-Content -Path $filename -Value "Status: Active" -Encoding UTF8
+    } else {
+        Add-Content -Path $filename -Value "Antivirus: Windows Defender" -Encoding UTF8
+        Add-Content -Path $filename -Value "Status: Inactive" -Encoding UTF8
+    }
 
-# Check for third-party antivirus (like Kaspersky)
-foreach ($av in $antivirusList) {
-    # We check for a third-party antivirus that is not Windows Defender
-    if ($av.displayName -ne "Windows Defender") {
-        if ($av.productState -match ".*(397568).*") {  # 397568 means antivirus is active
+    # Check for third-party antivirus using CIM (Get-CimInstance)
+    $antivirusList = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName AntiVirusProduct
+
+    foreach ($av in $antivirusList) {
+        # Skip Windows Defender, we already checked it
+        if ($av.displayName -ne "Windows Defender") {
+            $statusMessage = "Status: Unable to Verify"
+
+            # Check if the antivirus is active
+            if ($av.productState -match ".*(397568).*") {  # 397568 means antivirus is active
+                $statusMessage = "Status: Active"
+            }
+
             Add-Content -Path $filename -Value "Antivirus: $($av.displayName)" -Encoding UTF8
-            Add-Content -Path $filename -Value "Status: Active" -Encoding UTF8
-        } else {
-            # If we can't verify the antivirus status, we mention that it might be active, but cannot confirm
-            Add-Content -Path $filename -Value "Antivirus: $($av.displayName) (Status: Unable to Verify)" -Encoding UTF8
+            Add-Content -Path $filename -Value $statusMessage -Encoding UTF8
         }
     }
+
+} catch {
+    Add-Content -Path $filename -Value "Error retrieving antivirus status: $($_.Exception.Message)" -Encoding UTF8
 }
+
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # Final message displayed on the console.
 Write-Host "Report generated at: $filename"
