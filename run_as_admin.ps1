@@ -21,11 +21,11 @@ Add-Content -Path $filename -Value ""
 Add-Content -Path $filename -Value "[IDENTIFICATION]"
 Add-Content -Path $filename -Value "Computer Name: $env:COMPUTERNAME"
 
-# Listed created users.
-Add-Content -Path $filename -Value "Created Users:"
-
 # Adds the user that is executing the script.
 Add-Content -Path $filename -Value "User Executing the Script: $env:USERNAME"
+
+# Listed created users.
+Add-Content -Path $filename -Value "Created Users:"
 
 # Gets the active local users (not disabled) and ignores unwanted default accounts.
 $users = Get-WmiObject Win32_UserAccount | Where-Object { 
