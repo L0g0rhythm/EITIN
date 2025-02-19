@@ -393,10 +393,15 @@ if ($enclosure.ChassisTypes) {
 # Add a newline to separate this section from the rest of the file.
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
-# [MONITORS] – Information about connected monitors via WMI (WmiMonitorID class).
+# [MONITORS] – Information about connected monitors via WMI (WmiMonitorID & Win32_VideoController).
 Add-Content -Path $filename -Value "[MONITORS]" -Encoding UTF8
+
+# Get all connected monitors through WmiMonitorID
 $monitors = Get-WmiObject -Namespace root\wmi -Class WmiMonitorID
+$videoControllers = Get-WmiObject -Class Win32_VideoController
+
 if ($monitors) {
+    $index = 0
     foreach ($monitor in $monitors) {
         # Local function to decode byte arrays into strings (e.g., manufacturer name, model, serial).
         function Decode-Array($array) {
@@ -406,17 +411,32 @@ if ($monitors) {
                 return "Not Found" 
             }
         }
+
         $mManufacturer = Decode-Array $monitor.ManufacturerName
         $mName = Decode-Array $monitor.UserFriendlyName
         $mSerial = Decode-Array $monitor.SerialNumberID
+
+        # Retrieve the corresponding resolution from the video controller
+        $resolution = "$($videoControllers[$index].CurrentHorizontalResolution) x $($videoControllers[$index].CurrentVerticalResolution)"
+        
+        # Check if the monitor name was found
+        if ($mName -eq "Not Found") {
+            $mName = "Monitor (Internal or Unknown)"
+        }
+
+        # Add information to the file
         Add-Content -Path $filename -Value "Monitor: $mName" -Encoding UTF8
         Add-Content -Path $filename -Value "  Manufacturer: $mManufacturer" -Encoding UTF8
         Add-Content -Path $filename -Value "  Serial: $mSerial" -Encoding UTF8
+        Add-Content -Path $filename -Value "  Resolution: $resolution" -Encoding UTF8
         Add-Content -Path $filename -Value "" -Encoding UTF8
+
+        $index++
     }
 } else {
     Add-Content -Path $filename -Value "No monitors found via WmiMonitorID." -Encoding UTF8
 }
+
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [WINDOWS UPDATES] – Last 10 installed updates.
