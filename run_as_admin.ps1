@@ -1,12 +1,12 @@
 # Defines the current user's Desktop directory and the output file name.
 # Retrieves the desktop path and concatenates it with the computer name and the suffix "_Inventory.txt".
 $output_dir = [System.Environment]::GetFolderPath("Desktop")
-$filename = "$output_dir\$env:COMPUTERNAME`_Inventory.txt"
+$filename = "$output_dir\$($env:COMPUTERNAME)_Inventory.txt"
 
 # Deletes the previous file, if it exists.
 # This ensures that the report is not appended to old data, generating a clean inventory.
 if (Test-Path $filename) { 
-    Remove-Item $filename 
+    Remove-Item $filename -Force
 }
 
 # Adds the header in a single call.
