@@ -56,7 +56,7 @@ try {
 }
 
 # Gets the active local users (not disabled) and ignores unwanted default accounts.
-$users = Get-WmiObject Win32_UserAccount | Where-Object { 
+$users = Get-CimInstance Win32_UserAccount | Where-Object { 
     $_.LocalAccount -eq $true -and $_.Disabled -eq $false -and $_.Name -notmatch '^(Administrator|DefaultAccount|Guest|WDAGUtilityAccount)$'
 }
 
