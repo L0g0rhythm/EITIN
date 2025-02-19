@@ -112,10 +112,16 @@ Add-Content -Path $filename -Value "" -Encoding UTF8
 # [PROCESSOR]
 # Collects information about the processor: model, cores, and maximum speed.
 Add-Content -Path $filename -Value "[PROCESSOR]" -Encoding UTF8
+
+# Get processor information
 $processor = Get-CimInstance Win32_Processor
+
+# Adds processor details to the file
 Add-Content -Path $filename -Value "Model: $($processor.Name)" -Encoding UTF8
 Add-Content -Path $filename -Value "Cores: $($processor.NumberOfCores)" -Encoding UTF8
 Add-Content -Path $filename -Value "Max Speed: $($processor.MaxClockSpeed) MHz" -Encoding UTF8
+
+# Adds a blank line for better readability in the output file
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [RAM MEMORY]
