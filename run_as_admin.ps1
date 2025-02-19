@@ -260,7 +260,7 @@ $netAdapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
 
 # Filters wireless adapters (Wi-Fi)
 $wifiAdapters = $netAdapters | Where-Object { 
-    $_.Name -match 'Wireless|Wi[-]?Fi' -or $_.InterfaceDescription -match 'Wireless|Wi[-]?Fi'
+    $_.Name -match 'Wireless|Wi-Fi' -or $_.InterfaceDescription -match 'Wireless|Wi-Fi'
 }
 
 # Filters Ethernet adapters
@@ -271,10 +271,10 @@ $ethernetAdapters = $netAdapters | Where-Object {
 # Displays active Wi-Fi adapters
 if ($wifiAdapters) {
     foreach ($wifi in $wifiAdapters) {
-        Add-Content -Path $filename -Value "Wi‑Fi - Adapter: $($wifi.Name) | Physical Address (MAC): $($wifi.MacAddress)" -Encoding UTF8
+        Add-Content -Path $filename -Value "Wi-Fi - Adapter: $($wifi.Name) | Physical Address (MAC): $($wifi.MacAddress)" -Encoding UTF8
     }
 } else {
-    Add-Content -Path $filename -Value "No active Wi‑Fi interfaces found." -Encoding UTF8
+    Add-Content -Path $filename -Value "No active Wi-Fi interfaces found." -Encoding UTF8
 }
 
 # Displays active Ethernet adapters
@@ -299,8 +299,15 @@ if ($netAdapters) {
 # Selects the first valid IPv4 address, ignoring link-local addresses (169.254.x.x)
 $mainIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch "^169\.254\." } | Select-Object -First 1).IPAddress
 if ($mainIP) {
-    Add-Content -Path $filename -Value "Main IP: $mainIP" -Encoding UTF8
+    Add-Content -Path $filename -Value "Main IPv4 Address: $mainIP" -Encoding UTF8
 }
+
+# Selects the first valid IPv6 address, ignoring link-local addresses (fe80::)
+$mainIPv6 = (Get-NetIPAddress -AddressFamily IPv6 | Where-Object { $_.IPAddress -notmatch "^fe80::" } | Select-Object -First 1).IPAddress
+if ($mainIPv6) {
+    Add-Content -Path $filename -Value "Main IPv6 Address: $mainIPv6" -Encoding UTF8
+}
+
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [INSTALLED SOFTWARES] – List of installed applications (excluding Microsoft ones).
