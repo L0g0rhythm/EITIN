@@ -22,7 +22,7 @@ The PowerShell script collects system data, including:
 ## 🚀 How to Use
 
 1.  **Prerequisites:**
-    *   Windows 8 or later (including Windows Server 2012 or newer).
+    *   Windows 7 or later (including Windows Server 2012 or newer).
     *   PowerShell enabled.
     *   Administrative permissions to run the script.
     *   PowerShell execution policy configured to allow the use of the `-ExecutionPolicy Bypass` parameter. (It is recommended to adjust the policy to a more secure level after execution, if necessary.)
@@ -68,8 +68,8 @@ The generated report includes the following sections:
 
 ## ⚠️ Requirements
 
-*   **Operating System:** Windows 8 or later (including Windows Server 2012 or newer).
-*   **PowerShell:** Version 5.1 or later (recommended).
+*   **Operating System:** Windows 7 or later (including Windows Server 2012 or newer).
+*   **PowerShell:** Version 2 or later (recommended).
 *   **Administrative Permissions:** Required to access all system information.
 
 ---
