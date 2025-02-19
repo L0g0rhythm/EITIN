@@ -592,7 +592,12 @@ try {
 
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
+if ($activationStatus.ProductId) {
+    Add-Content -Path $filename -Value "Windows is activated" -Encoding UTF8
+} else {
+    Add-Content -Path $filename -Value "Windows is not activated" -Encoding UTF8
+}
+
 # Final message displayed on the console.
 Write-Host "The system report has been successfully generated and saved at:" -ForegroundColor Green
 Write-Host $filename -ForegroundColor Yellow
-
