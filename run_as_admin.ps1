@@ -366,22 +366,31 @@ Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [BIOS & FIRMWARE] – BIOS details and chassis information.
 Add-Content -Path $filename -Value "[BIOS & FIRMWARE]" -Encoding UTF8
+
+# Retrieve BIOS details.
 $bios = Get-CimInstance -ClassName Win32_BIOS
-# Joins BIOS versions (if more than one) separated by commas.
+
+# Join multiple BIOS versions (if more than one) separated by commas.
 Add-Content -Path $filename -Value "BIOS - Version: $($bios.BIOSVersion -join ', ')" -Encoding UTF8
-# Checks if the BIOS date is in a specific format; if so, converts it to a readable date.
+
+# Check if the BIOS release date is in a specific format and convert it to a readable date if valid.
 if ($bios.ReleaseDate -and $bios.ReleaseDate -match '^\d{14}\.\d{6}[\+\-]\d{3}$') {
     $biosDate = [Management.ManagementDateTimeConverter]::ToDateTime($bios.ReleaseDate)
     Add-Content -Path $filename -Value "BIOS - Release Date: $biosDate" -Encoding UTF8
 } else {
     Add-Content -Path $filename -Value "BIOS - Release Date: Not Available" -Encoding UTF8
 }
-# Retrieves system enclosure (chassis) information.
+
+# Retrieve system enclosure (chassis) information.
 $enclosure = Get-CimInstance -ClassName Win32_SystemEnclosure
 if ($enclosure.ChassisTypes) {
-    # Displays the first listed chassis type.
+    # Display the first listed chassis type.
     Add-Content -Path $filename -Value "Chassis Type: $($enclosure.ChassisTypes[0])" -Encoding UTF8
+} else {
+    Add-Content -Path $filename -Value "Chassis Type: Not Available" -Encoding UTF8
 }
+
+# Add a newline to separate this section from the rest of the file.
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [MONITORS] – Information about connected monitors via WMI (WmiMonitorID class).
