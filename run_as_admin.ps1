@@ -592,6 +592,9 @@ try {
 
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
+$regKey = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+$activationStatus = Get-ItemProperty -Path $regKey -Name "ProductId"
+
 if ($activationStatus.ProductId) {
     Add-Content -Path $filename -Value "Windows is activated" -Encoding UTF8
 } else {
