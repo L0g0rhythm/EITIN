@@ -513,13 +513,25 @@ Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [GRAPHIC CARD] - Information about the graphic card.
 Add-Content -Path $filename -Value "[GRAPHIC CARD]" -Encoding UTF8
-$gpu = Get-CimInstance Win32_VideoController
-foreach ($g in $gpu) {
-    Add-Content -Path $filename -Value "Name: $($g.Name)" -Encoding UTF8
-    Add-Content -Path $filename -Value "Driver Version: $($g.DriverVersion)" -Encoding UTF8
-    Add-Content -Path $filename -Value "Video Processor: $($g.VideoProcessor)" -Encoding UTF8
-    Add-Content -Path $filename -Value "" -Encoding UTF8
+
+try {
+    # Retrieve information about the graphic card(s)
+    $gpu = Get-CimInstance Win32_VideoController
+    foreach ($g in $gpu) {
+        # Add details about each graphic card
+        Add-Content -Path $filename -Value "Name: $($g.Name)" -Encoding UTF8
+        Add-Content -Path $filename -Value "Driver Version: $($g.DriverVersion)" -Encoding UTF8
+        Add-Content -Path $filename -Value "Video Processor: $($g.VideoProcessor)" -Encoding UTF8
+        Add-Content -Path $filename -Value "Video RAM: $($g.AdapterRAM / 1MB) MB" -Encoding UTF8  # Memory in MB
+        Add-Content -Path $filename -Value "Resolution Supported: $($g.CurrentHorizontalResolution) x $($g.CurrentVerticalResolution)" -Encoding UTF8
+        Add-Content -Path $filename -Value "" -Encoding UTF8
+    }
+} catch {
+    # Handle error if retrieving graphic card information fails
+    Add-Content -Path $filename -Value "Error retrieving graphic card information: $($_.Exception.Message)" -Encoding UTF8
 }
+
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # Firewall status check
 Add-Content -Path $filename -Value "[FIREWALL STATUS]" -Encoding UTF8
