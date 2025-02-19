@@ -23,6 +23,14 @@ Add-Content -Path $filename -Value $header
 Add-Content -Path $filename -Value "[IDENTIFICATION]"
 Add-Content -Path $filename -Value "Computer Name: $env:COMPUTERNAME"
 
+# List active users
+$activeUsers = Get-WmiObject -Class Win32_ComputerSystem | Select-Object -ExpandProperty UserName
+if ($activeUsers) {
+    Add-Content -Path $filename -Value "Active Users: $activeUsers"
+} else {
+    Add-Content -Path $filename -Value "Active Users: None"
+}
+
 # Adds the user that is executing the script.
 Add-Content -Path $filename -Value "User Executing the Script: $env:USERNAME"
 
