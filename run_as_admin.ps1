@@ -16,30 +16,44 @@ IT INVENTORY - $(Get-Date)
 ===============================
 
 "@
-Add-Content -Path $filename -Value $header
+Add-Content -Path $filename -Value $header -Encoding UTF8
 
 # [IDENTIFICATION]
 # Starts the identification section, displaying the computer name and listing active users.
-Add-Content -Path $filename -Value "[IDENTIFICATION]"
-Add-Content -Path $filename -Value "Computer Name: $env:COMPUTERNAME"
+Add-Content -Path $filename -Value "[IDENTIFICATION]" -Encoding UTF8
+Add-Content -Path $filename -Value "Computer Name: $env:COMPUTERNAME" -Encoding UTF8
 
 # List active users
 $activeUsers = Get-WmiObject -Class Win32_ComputerSystem | Select-Object -ExpandProperty UserName
 if ($activeUsers) {
-    Add-Content -Path $filename -Value "Active Users: $activeUsers"
+    Add-Content -Path $filename -Value "Active Users: $activeUsers" -Encoding UTF8
 } else {
-    Add-Content -Path $filename -Value "Active Users: None"
+    Add-Content -Path $filename -Value "Active Users: None" -Encoding UTF8
 }
 
 # Checks if the USERNAME environment variable exists before adding it to the file
 if ($env:USERNAME) {
-    Add-Content -Path $filename -Value "User Executing the Script: $env:USERNAME"
+    Add-Content -Path $filename -Value "User Executing the Script: $env:USERNAME" -Encoding UTF8
 } else {
-    Add-Content -Path $filename -Value "User Executing the Script: Unknown"
+    Add-Content -Path $filename -Value "User Executing the Script: Unknown" -Encoding UTF8
 }
 
 # Listed created users.
-Add-Content -Path $filename -Value "Created Users:"
+Add-Content -Path $filename -Value "Created Users:" -Encoding UTF8
+
+# Retrieve and list local users, handling potential errors
+try {
+    $users = Get-LocalUser | Select-Object -ExpandProperty Name
+    if ($users) {
+        foreach ($user in $users) {
+            Add-Content -Path $filename -Value $user -Encoding UTF8
+        }
+    } else {
+        Add-Content -Path $filename -Value "No users found." -Encoding UTF8
+    }
+} catch {
+    Add-Content -Path $filename -Value "Error retrieving users: $_" -Encoding UTF8
+}
 
 # Gets the active local users (not disabled) and ignores unwanted default accounts.
 $users = Get-WmiObject Win32_UserAccount | Where-Object { 
@@ -51,27 +65,27 @@ $filteredUsers = $users | Where-Object { $_.Name -ne $env:USERNAME }
 
 # For each filtered user, writes the name to the file.
 $filteredUsers | ForEach-Object { 
-    Add-Content -Path $filename -Value $_.Name 
+    Add-Content -Path $filename -Value $_.Name -Encoding UTF8
 }
 
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [OPERATING SYSTEM]
 # Collects operating system information through CIM (the currently recommended approach).
-Add-Content -Path $filename -Value "[OPERATING SYSTEM]"
+Add-Content -Path $filename -Value "[OPERATING SYSTEM]" -Encoding UTF8
 $os = Get-CimInstance Win32_OperatingSystem
-Add-Content -Path $filename -Value "System: $($os.Caption)"
-Add-Content -Path $filename -Value "Version: $($os.Version)"
-Add-Content -Path $filename -Value "Architecture: $($os.OSArchitecture)"
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "System: $($os.Caption)" -Encoding UTF8
+Add-Content -Path $filename -Value "Version: $($os.Version)" -Encoding UTF8
+Add-Content -Path $filename -Value "Architecture: $($os.OSArchitecture)" -Encoding UTF8
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [WINDOWS SPECIFICATIONS] - section where additional dates are displayed
 
-Add-Content -Path $filename -Value "[WINDOWS SPECIFICATIONS]"
+Add-Content -Path $filename -Value "[WINDOWS SPECIFICATIONS]" -Encoding UTF8
 $winSpec = Get-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion"
-Add-Content -Path $filename -Value "Product: $($winSpec.ProductName)"
-Add-Content -Path $filename -Value "Edition: $($winSpec.EditionID)"
-Add-Content -Path $filename -Value "Version: $($winSpec.CurrentVersion) (Build $($winSpec.CurrentBuild))"
+Add-Content -Path $filename -Value "Product: $($winSpec.ProductName)" -Encoding UTF8
+Add-Content -Path $filename -Value "Edition: $($winSpec.EditionID)" -Encoding UTF8
+Add-Content -Path $filename -Value "Version: $($winSpec.CurrentVersion) (Build $($winSpec.CurrentBuild))" -Encoding UTF8
 
 # Get the operating system object to retrieve installation date
 $os = Get-WmiObject Win32_OperatingSystem
@@ -90,16 +104,16 @@ if ($installDate) {
 
         # Display the formatted installation date in console and write it to the file
         Write-Host "Installation Date: $installDateFormatted"
-        Add-Content -Path $filename -Value "Installation Date: $installDateFormatted"
+        Add-Content -Path $filename -Value "Installation Date: $installDateFormatted" -Encoding UTF8
     } catch {
         # Handle any errors that may occur during the conversion process
         Write-Host "Installation Date: Conversion Error"
-        Add-Content -Path $filename -Value "Installation Date: Conversion Error"
+        Add-Content -Path $filename -Value "Installation Date: Conversion Error" -Encoding UTF8
     }
 } else {
     # Handle case where the installation date is not available
     Write-Host "Installation Date: Not Available"
-    Add-Content -Path $filename -Value "Installation Date: Not Available"
+    Add-Content -Path $filename -Value "Installation Date: Not Available" -Encoding UTF8
 }
 
 # Last boot handling
@@ -112,42 +126,41 @@ if ($os.LastBootUpTime -and $os.LastBootUpTime -match '^\d{14}\.\d{6}[\+\-]\d{3}
         $lastBootFormatted = $lastBoot.ToString("dd/MM/yyyy")
 
         # Write the formatted result to the file
-        Add-Content -Path $filename -Value "Last Boot: $lastBootFormatted"
+        Add-Content -Path $filename -Value "Last Boot: $lastBootFormatted" -Encoding UTF8
     } catch {
         # Handle any errors that may occur during the conversion process
-        Add-Content -Path $filename -Value "Last Boot: Conversion Error"
+        Add-Content -Path $filename -Value "Last Boot: Conversion Error" -Encoding UTF8
     }
 } else {
     # Handle case where the last boot time is not available
-    Add-Content -Path $filename -Value "Last Boot: Not Available"
+    Add-Content -Path $filename -Value "Last Boot: Not Available" -Encoding UTF8
 }
 
-Add-Content -Path $filename -Value ""
-
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [EQUIPMENT TYPE]
 # Determines if the equipment is Desktop or Notebook based on the PCSystemType property.
-Add-Content -Path $filename -Value "[EQUIPMENT TYPE]"
+Add-Content -Path $filename -Value "[EQUIPMENT TYPE]" -Encoding UTF8
 $equipmentType = (Get-CimInstance Win32_ComputerSystem).PCSystemType
 if ($equipmentType -eq 1) {
-    Add-Content -Path $filename -Value "Type: Desktop"
+    Add-Content -Path $filename -Value "Type: Desktop" -Encoding UTF8
 } else {
-    Add-Content -Path $filename -Value "Type: Notebook"
+    Add-Content -Path $filename -Value "Type: Notebook" -Encoding UTF8
 }
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [PROCESSOR]
 # Collects information about the processor: model, cores, and maximum speed.
-Add-Content -Path $filename -Value "[PROCESSOR]"
+Add-Content -Path $filename -Value "[PROCESSOR]" -Encoding UTF8
 $processor = Get-CimInstance Win32_Processor
-Add-Content -Path $filename -Value "Model: $($processor.Name)"
-Add-Content -Path $filename -Value "Cores: $($processor.NumberOfCores)"
-Add-Content -Path $filename -Value "Max Speed: $($processor.MaxClockSpeed) MHz"
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "Model: $($processor.Name)" -Encoding UTF8
+Add-Content -Path $filename -Value "Cores: $($processor.NumberOfCores)" -Encoding UTF8
+Add-Content -Path $filename -Value "Max Speed: $($processor.MaxClockSpeed) MHz" -Encoding UTF8
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [RAM MEMORY]
 # Collects information from each physical memory module installed.
-Add-Content -Path $filename -Value "[RAM MEMORY]"
+Add-Content -Path $filename -Value "[RAM MEMORY]" -Encoding UTF8
 $memory = Get-CimInstance Win32_PhysicalMemory
 $memory | ForEach-Object {
     # Converts the numeric memory type code to a readable string (DDR, DDR2, etc.).
@@ -160,15 +173,15 @@ $memory | ForEach-Object {
         34 { 'DDR5' }
         default { 'Unknown' }
     }
-    Add-Content -Path $filename -Value "Manufacturer: $($_.Manufacturer)"
-    Add-Content -Path $filename -Value "Capacity: $([math]::round($_.Capacity / 1GB, 2)) GB"
-    Add-Content -Path $filename -Value "Speed: $($_.Speed) MHz"
-    Add-Content -Path $filename -Value "Type: $ddr"
-    Add-Content -Path $filename -Value ""
+    Add-Content -Path $filename -Value "Manufacturer: $($_.Manufacturer)" -Encoding UTF8
+    Add-Content -Path $filename -Value "Capacity: $([math]::round($_.Capacity / 1GB, 2)) GB" -Encoding UTF8
+    Add-Content -Path $filename -Value "Speed: $($_.Speed) MHz" -Encoding UTF8
+    Add-Content -Path $filename -Value "Type: $ddr" -Encoding UTF8
+    Add-Content -Path $filename -Value "" -Encoding UTF8
 }
 
 # [STORAGE] - Information on physical disks (SSD, HDD, or USB Drive).
-Add-Content -Path $filename -Value "[STORAGE]"
+Add-Content -Path $filename -Value "[STORAGE]" -Encoding UTF8
 
 $disks = Get-PhysicalDisk
 foreach ($disk in $disks) {
@@ -199,21 +212,21 @@ foreach ($disk in $disks) {
     }
     
     # Logs the disk's friendly name
-    Add-Content -Path $filename -Value "Drive: $($disk.FriendlyName)"
+    Add-Content -Path $filename -Value "Drive: $($disk.FriendlyName)" -Encoding UTF8
     # Logs the type of disk (SSD, HDD, NVMe, or USB Drive)
-    Add-Content -Path $filename -Value "Type: $media"
+    Add-Content -Path $filename -Value "Type: $media" -Encoding UTF8
     
     # Displays the serial number if available.
     if ($disk.SerialNumber) {
-        Add-Content -Path $filename -Value "Serial: $($disk.SerialNumber)"
+        Add-Content -Path $filename -Value "Serial: $($disk.SerialNumber)" -Encoding UTF8
     }
     
     # Add a newline to separate each disk's information
-    Add-Content -Path $filename -Value ""
+    Add-Content -Path $filename -Value "" -Encoding UTF8
 }
 
 # Disk space report by volume.
-Add-Content -Path $filename -Value 'Space by Drive (Volumes):'
+Add-Content -Path $filename -Value 'Space by Drive (Volumes):' -Encoding UTF8
 
 $volumes = Get-Volume | Where-Object { $_.FileSystem -ne $null -and $_.DriveLetter -ne $null }
 
@@ -227,14 +240,16 @@ foreach ($volume in $volumes) {
     if ($total -gt 0.1) {
         # Format the message with drive letter, total, used, and available space in GB
         $message = "Drive {0}: Total: {1} GB | Used: {2} GB | Available: {3} GB" -f $volume.DriveLetter, $total, $used, $available
-        Add-Content -Path $filename -Value $message
+        Add-Content -Path $filename -Value $message -Encoding UTF8
     }
 }
 
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
+
+
 
 # [NETWORK] – Network information.
-Add-Content -Path $filename -Value "[NETWORK]"
+Add-Content -Path $filename -Value "[NETWORK]" -Encoding UTF8
 
 # Gets all active network adapters
 $netAdapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
@@ -252,40 +267,40 @@ $ethernetAdapters = $netAdapters | Where-Object {
 # Displays active Wi-Fi adapters
 if ($wifiAdapters) {
     foreach ($wifi in $wifiAdapters) {
-        Add-Content -Path $filename -Value "Wi‑Fi - Adapter: $($wifi.Name) | Physical Address (MAC): $($wifi.MacAddress)"
+        Add-Content -Path $filename -Value "Wi‑Fi - Adapter: $($wifi.Name) | Physical Address (MAC): $($wifi.MacAddress)" -Encoding UTF8
     }
 } else {
-    Add-Content -Path $filename -Value "No active Wi‑Fi interfaces found."
+    Add-Content -Path $filename -Value "No active Wi‑Fi interfaces found." -Encoding UTF8
 }
 
 # Displays active Ethernet adapters
 if ($ethernetAdapters) {
     foreach ($eth in $ethernetAdapters) {
-        Add-Content -Path $filename -Value "Ethernet - Adapter: $($eth.Name) | Physical Address (MAC): $($eth.MacAddress)"
+        Add-Content -Path $filename -Value "Ethernet - Adapter: $($eth.Name) | Physical Address (MAC): $($eth.MacAddress)" -Encoding UTF8
     }
 } else {
-    Add-Content -Path $filename -Value "No active Ethernet interfaces found."
+    Add-Content -Path $filename -Value "No active Ethernet interfaces found." -Encoding UTF8
 }
 
 # Adds a listing of all active network adapters (regardless of type)
 if ($netAdapters) {
-    Add-Content -Path $filename -Value "[ALL ACTIVE NETWORK ADAPTERS]"
+    Add-Content -Path $filename -Value "[ALL ACTIVE NETWORK ADAPTERS]" -Encoding UTF8
     foreach ($adapter in $netAdapters) {
-        Add-Content -Path $filename -Value "Adapter: $($adapter.Name) | Physical Address (MAC): $($adapter.MacAddress) | Description: $($adapter.InterfaceDescription)"
+        Add-Content -Path $filename -Value "Adapter: $($adapter.Name) | Physical Address (MAC): $($adapter.MacAddress) | Description: $($adapter.InterfaceDescription)" -Encoding UTF8
     }
 } else {
-    Add-Content -Path $filename -Value "No active network adapters found."
+    Add-Content -Path $filename -Value "No active network adapters found." -Encoding UTF8
 }
 
 # Selects the first valid IPv4 address, ignoring link-local addresses (169.254.x.x)
 $mainIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notmatch "^169\.254\." } | Select-Object -First 1).IPAddress
 if ($mainIP) {
-    Add-Content -Path $filename -Value "Main IP: $mainIP"
+    Add-Content -Path $filename -Value "Main IP: $mainIP" -Encoding UTF8
 }
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [INSTALLED SOFTWARES] – List of installed applications (excluding Microsoft ones).
-Add-Content -Path $filename -Value "[INSTALLED SOFTWARES]"
+Add-Content -Path $filename -Value "[INSTALLED SOFTWARES]" -Encoding UTF8
 $apps1 = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | 
     Where-Object { $_.DisplayName -and $_.DisplayName -notmatch "Microsoft" }
 $apps2 = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | 
@@ -293,51 +308,51 @@ $apps2 = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVe
 # Merges the two lists (64-bit and 32-bit applications).
 $softwares = $apps1 + $apps2
 $softwares | ForEach-Object {
-    Add-Content -Path $filename -Value "$($_.DisplayName) - Version: $($_.DisplayVersion)"
+    Add-Content -Path $filename -Value "$($_.DisplayName) - Version: $($_.DisplayVersion)" -Encoding UTF8
 }
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [MAC] – Product information (Model, Manufacturer, and for Dell, displays the Service Tag).
-Add-Content -Path $filename -Value "[MAC]"
+Add-Content -Path $filename -Value "[MAC]" -Encoding UTF8
 $mec = Get-CimInstance -ClassName Win32_ComputerSystemProduct
-Add-Content -Path $filename -Value "Model: $($mec.Name)"
-Add-Content -Path $filename -Value "Manufacturer: $($mec.Vendor)"
+Add-Content -Path $filename -Value "Model: $($mec.Name)" -Encoding UTF8
+Add-Content -Path $filename -Value "Manufacturer: $($mec.Vendor)" -Encoding UTF8
 if ($mec.Vendor -match "Dell") {
     # For Dell systems, retrieves the BIOS Serial which represents the Service Tag.
     $dellSerial = (Get-CimInstance -ClassName Win32_BIOS).SerialNumber
-    Add-Content -Path $filename -Value "Dell Service Tag: $dellSerial"
+    Add-Content -Path $filename -Value "Dell Service Tag: $dellSerial" -Encoding UTF8
 } else {
-    Add-Content -Path $filename -Value "Identification Number: $($mec.IdentifyingNumber)"
+    Add-Content -Path $filename -Value "Identification Number: $($mec.IdentifyingNumber)" -Encoding UTF8
 }
 
 # Adds new options: Device ID and Product ID.
-Add-Content -Path $filename -Value "Device ID: $($mec.UUID)"
+Add-Content -Path $filename -Value "Device ID: $($mec.UUID)" -Encoding UTF8
 $productID = (Get-ItemProperty -Path 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion').ProductID
-Add-Content -Path $filename -Value "Product ID: $productID"
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "Product ID: $productID" -Encoding UTF8
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [BIOS & FIRMWARE] – BIOS details and chassis information.
-Add-Content -Path $filename -Value "[BIOS & FIRMWARE]"
+Add-Content -Path $filename -Value "[BIOS & FIRMWARE]" -Encoding UTF8
 $bios = Get-CimInstance -ClassName Win32_BIOS
 # Joins BIOS versions (if more than one) separated by commas.
-Add-Content -Path $filename -Value "BIOS - Version: $($bios.BIOSVersion -join ', ')"
+Add-Content -Path $filename -Value "BIOS - Version: $($bios.BIOSVersion -join ', ')" -Encoding UTF8
 # Checks if the BIOS date is in a specific format; if so, converts it to a readable date.
 if ($bios.ReleaseDate -and $bios.ReleaseDate -match '^\d{14}\.\d{6}[\+\-]\d{3}$') {
     $biosDate = [Management.ManagementDateTimeConverter]::ToDateTime($bios.ReleaseDate)
-    Add-Content -Path $filename -Value "BIOS - Release Date: $biosDate"
+    Add-Content -Path $filename -Value "BIOS - Release Date: $biosDate" -Encoding UTF8
 } else {
-    Add-Content -Path $filename -Value "BIOS - Release Date: Not Available"
+    Add-Content -Path $filename -Value "BIOS - Release Date: Not Available" -Encoding UTF8
 }
 # Retrieves system enclosure (chassis) information.
 $enclosure = Get-CimInstance -ClassName Win32_SystemEnclosure
 if ($enclosure.ChassisTypes) {
     # Displays the first listed chassis type.
-    Add-Content -Path $filename -Value "Chassis Type: $($enclosure.ChassisTypes[0])"
+    Add-Content -Path $filename -Value "Chassis Type: $($enclosure.ChassisTypes[0])" -Encoding UTF8
 }
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [MONITORS] – Information about connected monitors via WMI (WmiMonitorID class).
-Add-Content -Path $filename -Value "[MONITORS]"
+Add-Content -Path $filename -Value "[MONITORS]" -Encoding UTF8
 $monitors = Get-WmiObject -Namespace root\wmi -Class WmiMonitorID
 if ($monitors) {
     foreach ($monitor in $monitors) {
@@ -352,18 +367,18 @@ if ($monitors) {
         $mManufacturer = Decode-Array $monitor.ManufacturerName
         $mName = Decode-Array $monitor.UserFriendlyName
         $mSerial = Decode-Array $monitor.SerialNumberID
-        Add-Content -Path $filename -Value "Monitor: $mName"
-        Add-Content -Path $filename -Value "  Manufacturer: $mManufacturer"
-        Add-Content -Path $filename -Value "  Serial: $mSerial"
-        Add-Content -Path $filename -Value ""
+        Add-Content -Path $filename -Value "Monitor: $mName" -Encoding UTF8
+        Add-Content -Path $filename -Value "  Manufacturer: $mManufacturer" -Encoding UTF8
+        Add-Content -Path $filename -Value "  Serial: $mSerial" -Encoding UTF8
+        Add-Content -Path $filename -Value "" -Encoding UTF8
     }
 } else {
-    Add-Content -Path $filename -Value "No monitors found via WmiMonitorID."
+    Add-Content -Path $filename -Value "No monitors found via WmiMonitorID." -Encoding UTF8
 }
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [WINDOWS UPDATES] – Last 10 installed updates.
-Add-Content -Path $filename -Value "[WINDOWS UPDATES]"
+Add-Content -Path $filename -Value "[WINDOWS UPDATES]" -Encoding UTF8
 
 try {
     # Creates the session and update searcher object
@@ -393,41 +408,41 @@ try {
         }
         # Formats the date and adds the information to the file.
         $updateDate = $update.Date.ToString("dd/MM/yyyy HH:mm")
-        Add-Content -Path $filename -Value "$updateDate - [$category] $title"
+        Add-Content -Path $filename -Value "$updateDate - [$category] $title" -Encoding UTF8
     }
 } catch {
-    Add-Content -Path $filename -Value "Unable to retrieve Windows update history."
+    Add-Content -Path $filename -Value "Unable to retrieve Windows update history." -Encoding UTF8
 }
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [ACTIVE DIRECTORY] – Collects Active Directory information if the module is available.
-Add-Content -Path $filename -Value "[ACTIVE DIRECTORY]"
+Add-Content -Path $filename -Value "[ACTIVE DIRECTORY]" -Encoding UTF8
 if (Get-Command -Name Get-ADComputer -ErrorAction SilentlyContinue) {
     Import-Module ActiveDirectory
     $adComputer = Get-ADComputer $env:COMPUTERNAME -Properties DistinguishedName
-    Add-Content -Path $filename -Value "DistinguishedName: $($adComputer.DistinguishedName)"
+    Add-Content -Path $filename -Value "DistinguishedName: $($adComputer.DistinguishedName)" -Encoding UTF8
 } else {
-    Add-Content -Path $filename -Value "ActiveDirectory module not found. Skipping AD collection."
+    Add-Content -Path $filename -Value "ActiveDirectory module not found. Skipping AD collection." -Encoding UTF8
 }
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [GRAPHIC CARD] - Information about the graphic card.
-Add-Content -Path $filename -Value "[GRAPHIC CARD]"
+Add-Content -Path $filename -Value "[GRAPHIC CARD]" -Encoding UTF8
 $gpu = Get-CimInstance Win32_VideoController
 foreach ($g in $gpu) {
-    Add-Content -Path $filename -Value "Name: $($g.Name)"
-    Add-Content -Path $filename -Value "Driver Version: $($g.DriverVersion)"
-    Add-Content -Path $filename -Value "Video Processor: $($g.VideoProcessor)"
-    Add-Content -Path $filename -Value ""
+    Add-Content -Path $filename -Value "Name: $($g.Name)" -Encoding UTF8
+    Add-Content -Path $filename -Value "Driver Version: $($g.DriverVersion)" -Encoding UTF8
+    Add-Content -Path $filename -Value "Video Processor: $($g.VideoProcessor)" -Encoding UTF8
+    Add-Content -Path $filename -Value "" -Encoding UTF8
 }
 
 # Firewall status check
-Add-Content -Path $filename -Value "[FIREWALL STATUS]"
+Add-Content -Path $filename -Value "[FIREWALL STATUS]" -Encoding UTF8
 $firewallStatus = Get-NetFirewallProfile -Profile Domain,Public,Private
 foreach ($profile in $firewallStatus) {
-    Add-Content -Path $filename -Value "$($profile.Name): $($profile.Enabled)"
+    Add-Content -Path $filename -Value "$($profile.Name): $($profile.Enabled)" -Encoding UTF8
 }
-Add-Content -Path $filename -Value ""
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # Antivirus handling
 $antivirusList = Get-WmiObject -Namespace "root\SecurityCenter2" -Class AntiVirusProduct
@@ -435,11 +450,11 @@ $antivirusList = Get-WmiObject -Namespace "root\SecurityCenter2" -Class AntiViru
 # Check Windows Defender status
 $defenderStatus = Get-Service -Name "WinDefend"
 if ($defenderStatus.Status -eq "Running") {
-    Add-Content -Path $filename -Value "Antivirus: Windows Defender"
-    Add-Content -Path $filename -Value "Status: Active"
+    Add-Content -Path $filename -Value "Antivirus: Windows Defender" -Encoding UTF8
+    Add-Content -Path $filename -Value "Status: Active" -Encoding UTF8
 } else {
-    Add-Content -Path $filename -Value "Antivirus: Windows Defender"
-    Add-Content -Path $filename -Value "Status: Inactive"
+    Add-Content -Path $filename -Value "Antivirus: Windows Defender" -Encoding UTF8
+    Add-Content -Path $filename -Value "Status: Inactive" -Encoding UTF8
 }
 
 # Check for third-party antivirus (like Kaspersky)
@@ -447,11 +462,11 @@ foreach ($av in $antivirusList) {
     # We check for a third-party antivirus that is not Windows Defender
     if ($av.displayName -ne "Windows Defender") {
         if ($av.productState -match ".*(397568).*") {  # 397568 means antivirus is active
-            Add-Content -Path $filename -Value "Antivirus: $($av.displayName)"
-            Add-Content -Path $filename -Value "Status: Active"
+            Add-Content -Path $filename -Value "Antivirus: $($av.displayName)" -Encoding UTF8
+            Add-Content -Path $filename -Value "Status: Active" -Encoding UTF8
         } else {
             # If we can't verify the antivirus status, we mention that it might be active, but cannot confirm
-            Add-Content -Path $filename -Value "Antivirus: $($av.displayName) (Status: Unable to Verify)"
+            Add-Content -Path $filename -Value "Antivirus: $($av.displayName) (Status: Unable to Verify)" -Encoding UTF8
         }
     }
 }
