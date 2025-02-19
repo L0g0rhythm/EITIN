@@ -68,9 +68,9 @@ Add-Content -Path $filename -Value "===============================" -Encoding U
 Add-Content -Path $filename -Value "List of Filtered Users:" -Encoding UTF8
 Add-Content -Path $filename -Value "===============================" -Encoding UTF8
 
-# For each filtered user, writes the name to the file.
+# For each filtered user, writes the name to the file, adding a newline.
 $filteredUsers | ForEach-Object { 
-    Add-Content -Path $filename -Value $_.Name -Encoding UTF8
+    Add-Content -Path $filename -Value "$($_.Name)`r`n" -Encoding UTF8
 }
 
 # Adds an empty line to the file for better readability.
