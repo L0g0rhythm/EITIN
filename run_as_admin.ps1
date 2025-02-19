@@ -76,22 +76,22 @@ $filteredUsers | ForEach-Object {
 # Adds an empty line to the file for better readability.
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
-# [OPERATING SYSTEM]
-# Collects operating system information through CIM (the currently recommended approach).
-Add-Content -Path $filename -Value "[OPERATING SYSTEM]" -Encoding UTF8
+# [SYSTEM INFORMATION] - Unifies the operating system and windows specifications.
+Add-Content -Path $filename -Value "[SYSTEM INFORMATION]" -Encoding UTF8
 $os = Get-CimInstance Win32_OperatingSystem
-Add-Content -Path $filename -Value "System: $($os.Caption)" -Encoding UTF8
-Add-Content -Path $filename -Value "Version: $($os.Version)" -Encoding UTF8
-Add-Content -Path $filename -Value "Architecture: $($os.OSArchitecture)" -Encoding UTF8
-Add-Content -Path $filename -Value "" -Encoding UTF8
-
-# [WINDOWS SPECIFICATIONS] - section where additional dates are displayed
-
-Add-Content -Path $filename -Value "[WINDOWS SPECIFICATIONS]" -Encoding UTF8
 $winSpec = Get-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion"
-Add-Content -Path $filename -Value "Product: $($winSpec.ProductName)" -Encoding UTF8
+
+# Unifying the system and specification details in a single section
+Add-Content -Path $filename -Value "System: $($os.Caption)" -Encoding UTF8
 Add-Content -Path $filename -Value "Edition: $($winSpec.EditionID)" -Encoding UTF8
-Add-Content -Path $filename -Value "Version: $($winSpec.CurrentVersion) (Build $($winSpec.CurrentBuild))" -Encoding UTF8
+Add-Content -Path $filename -Value "Version: $($os.Version) (Build $($winSpec.CurrentBuild))" -Encoding UTF8
+Add-Content -Path $filename -Value "Architecture: $($os.OSArchitecture)" -Encoding UTF8
+
+# Optional: Add installation date or other relevant information
+Add-Content -Path $filename -Value "Install Date: $($os.InstallDate)" -Encoding UTF8
+
+# Adding a blank line for better readability
+Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # Get the operating system object to retrieve installation date
 $os = Get-WmiObject Win32_OperatingSystem
