@@ -533,12 +533,25 @@ try {
 
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
-# Firewall status check
+# [FIREWALL STATUS] - Check firewall status for different profiles.
 Add-Content -Path $filename -Value "[FIREWALL STATUS]" -Encoding UTF8
-$firewallStatus = Get-NetFirewallProfile -Profile Domain,Public,Private
-foreach ($profile in $firewallStatus) {
-    Add-Content -Path $filename -Value "$($profile.Name): $($profile.Enabled)" -Encoding UTF8
+
+try {
+    # Retrieve the firewall profile information
+    $firewallStatus = Get-NetFirewallProfile -Profile Domain,Public,Private
+    foreach ($profile in $firewallStatus) {
+        # Add the firewall status for each profile
+        if ($profile.Enabled) {
+            Add-Content -Path $filename -Value "$($profile.Name): Enabled (Firewall is active)" -Encoding UTF8
+        } else {
+            Add-Content -Path $filename -Value "$($profile.Name): Disabled (Firewall is inactive)" -Encoding UTF8
+        }
+    }
+} catch {
+    # Handle errors related to firewall status retrieval
+    Add-Content -Path $filename -Value "Error retrieving firewall status: $($_.Exception.Message)" -Encoding UTF8
 }
+
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # Antivirus handling
