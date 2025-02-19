@@ -87,40 +87,11 @@ Add-Content -Path $filename -Value "Edition: $($winSpec.EditionID)" -Encoding UT
 Add-Content -Path $filename -Value "Version: $($os.Version) (Build $($winSpec.CurrentBuild))" -Encoding UTF8
 Add-Content -Path $filename -Value "Architecture: $($os.OSArchitecture)" -Encoding UTF8
 
-# Optional: Add installation date or other relevant information
+# Add installation date or other relevant information
 Add-Content -Path $filename -Value "Install Date: $($os.InstallDate)" -Encoding UTF8
 
 # Adding a blank line for better readability
 Add-Content -Path $filename -Value "" -Encoding UTF8
-
-# Get the operating system object to retrieve installation date
-$os = Get-WmiObject Win32_OperatingSystem
-$installDate = $os.InstallDate
-
-if ($installDate) {
-    try {
-        # Extract the date and time part (yyyyMMddHHmmss) from the InstallDate
-        $installDateString = $installDate.Substring(0, 14)
-
-        # Convert the installation date to DateTime format
-        $installDateParsed = [datetime]::ParseExact($installDateString, 'yyyyMMddHHmmss', $null)
-
-        # Format the installation date to day/month/year (dd/MM/yyyy)
-        $installDateFormatted = $installDateParsed.ToString("dd/MM/yyyy")
-
-        # Display the formatted installation date in console and write it to the file
-        Write-Host "Installation Date: $installDateFormatted"
-        Add-Content -Path $filename -Value "Installation Date: $installDateFormatted" -Encoding UTF8
-    } catch {
-        # Handle any errors that may occur during the conversion process
-        Write-Host "Installation Date: Conversion Error"
-        Add-Content -Path $filename -Value "Installation Date: Conversion Error" -Encoding UTF8
-    }
-} else {
-    # Handle case where the installation date is not available
-    Write-Host "Installation Date: Not Available"
-    Add-Content -Path $filename -Value "Installation Date: Not Available" -Encoding UTF8
-}
 
 # [EQUIPMENT TYPE]
 # Determines if the equipment is Desktop or Notebook based on the PCSystemType property.
