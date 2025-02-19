@@ -443,37 +443,44 @@ Add-Content -Path $filename -Value "" -Encoding UTF8
 Add-Content -Path $filename -Value "[WINDOWS UPDATES]" -Encoding UTF8
 
 try {
-    # Creates the session and update searcher object
+    # Create the session and update searcher object
     $updateSession = New-Object -ComObject Microsoft.Update.Session
     $updateSearcher = $updateSession.CreateUpdateSearcher()
     
-    # Gets the total count of installed updates
+    # Get the total count of installed updates
     $historyCount = $updateSearcher.GetTotalHistoryCount()
     
-    # Sets the desired amount (10 or fewer, if there are less updates)
+    # Set the desired amount (10 or fewer, if there are less updates)
     $numUpdates = [Math]::Min(10, $historyCount)
     
-    # Retrieves the update history (from index 0 to $numUpdates)
+    # Retrieve the update history (from index 0 to $numUpdates)
     $updates = $updateSearcher.QueryHistory(0, $numUpdates) | Sort-Object -Property Date -Descending
     
+    # Process updates
     foreach ($update in $updates) {
         $title = $update.Title
-        # Classifies the update based on keywords in the title.
-        if ($title -match 'Quality|Cumulative') {
-            $category = "Quality Update"
-        } elseif ($title -match 'Driver') {
-            $category = "Driver Update"
-        } elseif ($title -match 'Definition|Antivirus') {
-            $category = "Definition Update"
-        } else {
-            $category = "Other Updates"
-        }
-        # Formats the date and adds the information to the file.
+        $kbArticle = $update.KBArticleIDs -join ', ' # Get KB article(s) if available
         $updateDate = $update.Date.ToString("dd/MM/yyyy HH:mm")
+
+        # Classify the update based on keywords in the title.
+        $category = if ($title -match 'Quality|Cumulative') {
+            "Quality Update"
+        } elseif ($title -match 'Driver') {
+            "Driver Update"
+        } elseif ($title -match 'Definition|Antivirus') {
+            "Definition Update"
+        } else {
+            "Other Updates"
+        }
+        
+        # Log update info with KB articles if available.
         Add-Content -Path $filename -Value "$updateDate - [$category] $title" -Encoding UTF8
+        if ($kbArticle) {
+            Add-Content -Path $filename -Value "  KB Article(s): $kbArticle" -Encoding UTF8
+        }
     }
 } catch {
-    Add-Content -Path $filename -Value "Unable to retrieve Windows update history." -Encoding UTF8
+    Add-Content -Path $filename -Value "Unable to retrieve Windows update history. Error: $($_.Exception.Message)" -Encoding UTF8
 }
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
