@@ -97,11 +97,16 @@ Add-Content -Path $filename -Value "" -Encoding UTF8
 # Determines if the equipment is Desktop or Notebook based on the PCSystemType property.
 Add-Content -Path $filename -Value "[EQUIPMENT TYPE]" -Encoding UTF8
 $equipmentType = (Get-CimInstance Win32_ComputerSystem).PCSystemType
+
+# Checks the PCSystemType and determines the equipment type
 if ($equipmentType -eq 1) {
     Add-Content -Path $filename -Value "Type: Desktop" -Encoding UTF8
-} else {
+} elseif ($equipmentType -eq 2) {
     Add-Content -Path $filename -Value "Type: Notebook" -Encoding UTF8
+} else {
+    Add-Content -Path $filename -Value "Type: Unknown" -Encoding UTF8
 }
+
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [PROCESSOR]
