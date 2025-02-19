@@ -60,8 +60,8 @@ $users = Get-CimInstance Win32_UserAccount | Where-Object {
     $_.LocalAccount -eq $true -and $_.Disabled -eq $false -and $_.Name -notmatch '^(Administrator|DefaultAccount|Guest|WDAGUtilityAccount)$'
 }
 
-# Filters out the current user to prevent duplication in the list of users.
-$filteredUsers = $users | Where-Object { $_.Name -ne $env:USERNAME }
+# Filters out the current user (the user running the script) to avoid duplication.
+$filteredUsers = $users | Where-Object { $_.Name -notin $env:USERNAME }
 
 # Adds a header or separator before the list of users
 Add-Content -Path $filename -Value "===============================" -Encoding UTF8
