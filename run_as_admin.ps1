@@ -337,9 +337,15 @@ Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [MAC] – Product information (Model, Manufacturer, and for Dell, displays the Service Tag).
 Add-Content -Path $filename -Value "[MAC]" -Encoding UTF8
+
+# Get computer system product information
 $mec = Get-CimInstance -ClassName Win32_ComputerSystemProduct
+
+# Add model and manufacturer to the report
 Add-Content -Path $filename -Value "Model: $($mec.Name)" -Encoding UTF8
 Add-Content -Path $filename -Value "Manufacturer: $($mec.Vendor)" -Encoding UTF8
+
+# For Dell systems, display the Dell Service Tag. For other manufacturers, display the IdentifyingNumber.
 if ($mec.Vendor -match "Dell") {
     # For Dell systems, retrieves the BIOS Serial which represents the Service Tag.
     $dellSerial = (Get-CimInstance -ClassName Win32_BIOS).SerialNumber
@@ -350,8 +356,12 @@ if ($mec.Vendor -match "Dell") {
 
 # Adds new options: Device ID and Product ID.
 Add-Content -Path $filename -Value "Device ID: $($mec.UUID)" -Encoding UTF8
+
+# Get the Product ID from Windows registry
 $productID = (Get-ItemProperty -Path 'HKLM:\Software\Microsoft\Windows NT\CurrentVersion').ProductID
 Add-Content -Path $filename -Value "Product ID: $productID" -Encoding UTF8
+
+# Add a newline to separate this section from the rest of the file
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [BIOS & FIRMWARE] – BIOS details and chassis information.
