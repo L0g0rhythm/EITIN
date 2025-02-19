@@ -226,25 +226,31 @@ foreach ($disk in $disks) {
 # Disk space report by volume.
 Add-Content -Path $filename -Value 'Space by Drive (Volumes):' -Encoding UTF8
 
+# Retrieve volumes with filesystem and drive letter, filtering out unnecessary ones
 $volumes = Get-Volume | Where-Object { $_.FileSystem -ne $null -and $_.DriveLetter -ne $null }
 
 foreach ($volume in $volumes) {
-    # Calculate total, used, and available space in GB and round to 2 decimal places.
+    # Calculate total, used, and available space in GB and round to 2 decimal places
     $total = [math]::round($volume.Size / 1GB, 2)
     $used = [math]::round(($volume.Size - $volume.SizeRemaining) / 1GB, 2)
     $available = [math]::round($volume.SizeRemaining / 1GB, 2)
 
-    # Only include drives with letters and a minimum total size of 1 GB to filter out small or unimportant drives.
+    # Only include drives with letters and a minimum total size of 0.1 GB
     if ($total -gt 0.1) {
         # Format the message with drive letter, total, used, and available space in GB
         $message = "Drive {0}: Total: {1} GB | Used: {2} GB | Available: {3} GB" -f $volume.DriveLetter, $total, $used, $available
         Add-Content -Path $filename -Value $message -Encoding UTF8
+        
+        # Add an alert if available space is below a certain threshold (e.g., 10 GB)
+        if ($available -lt 10) {
+            $alertMessage = "ALERT: Drive {0} is running low on space. Available space: {1} GB." -f $volume.DriveLetter, $available
+            Add-Content -Path $filename -Value $alertMessage -Encoding UTF8
+        }
     }
 }
 
+# Add an empty line for separation at the end of the report
 Add-Content -Path $filename -Value "" -Encoding UTF8
-
-
 
 # [NETWORK] – Network information.
 Add-Content -Path $filename -Value "[NETWORK]" -Encoding UTF8
