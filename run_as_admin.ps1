@@ -486,13 +486,29 @@ Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [ACTIVE DIRECTORY] – Collects Active Directory information if the module is available.
 Add-Content -Path $filename -Value "[ACTIVE DIRECTORY]" -Encoding UTF8
+
+# Check if the ActiveDirectory module is available
 if (Get-Command -Name Get-ADComputer -ErrorAction SilentlyContinue) {
-    Import-Module ActiveDirectory
-    $adComputer = Get-ADComputer $env:COMPUTERNAME -Properties DistinguishedName
-    Add-Content -Path $filename -Value "DistinguishedName: $($adComputer.DistinguishedName)" -Encoding UTF8
+    try {
+        # Import the ActiveDirectory module if it's available
+        Import-Module ActiveDirectory -ErrorAction Stop
+
+        # Collect the AD computer information
+        $adComputer = Get-ADComputer $env:COMPUTERNAME -Properties DistinguishedName, OperatingSystem, LastLogonDate, Name
+
+        # Add the AD information to the file
+        Add-Content -Path $filename -Value "DistinguishedName: $($adComputer.DistinguishedName)" -Encoding UTF8
+        Add-Content -Path $filename -Value "Operating System: $($adComputer.OperatingSystem)" -Encoding UTF8
+        Add-Content -Path $filename -Value "Last Logon Date: $($adComputer.LastLogonDate)" -Encoding UTF8
+        Add-Content -Path $filename -Value "Computer Name: $($adComputer.Name)" -Encoding UTF8
+    } catch {
+        # In case there's an error importing the module or getting the information
+        Add-Content -Path $filename -Value "Error retrieving Active Directory information: $($_.Exception.Message)" -Encoding UTF8
+    }
 } else {
     Add-Content -Path $filename -Value "ActiveDirectory module not found. Skipping AD collection." -Encoding UTF8
 }
+
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [GRAPHIC CARD] - Information about the graphic card.
