@@ -63,11 +63,17 @@ $users = Get-WmiObject Win32_UserAccount | Where-Object {
 # Filters out the current user to prevent duplication in the list of users.
 $filteredUsers = $users | Where-Object { $_.Name -ne $env:USERNAME }
 
+# Adds a header or separator before the list of users
+Add-Content -Path $filename -Value "===============================" -Encoding UTF8
+Add-Content -Path $filename -Value "List of Filtered Users:" -Encoding UTF8
+Add-Content -Path $filename -Value "===============================" -Encoding UTF8
+
 # For each filtered user, writes the name to the file.
 $filteredUsers | ForEach-Object { 
     Add-Content -Path $filename -Value $_.Name -Encoding UTF8
 }
 
+# Adds an empty line to the file for better readability.
 Add-Content -Path $filename -Value "" -Encoding UTF8
 
 # [OPERATING SYSTEM]
