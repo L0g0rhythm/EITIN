@@ -169,10 +169,10 @@ Add-Content -Path $filename -Value "[STORAGE]" -Encoding UTF8
 
 $disks = Get-PhysicalDisk
 foreach ($disk in $disks) {
-    # Determines the media type based on the MediaType value.
+    # Determines the media type based on the MediaType value or checks for terms in Model or FriendlyName.
     $media = switch ($disk.MediaType) {
-        3 { "HDD" }
-        4 { "SSD" }
+        3 { "HDD" }  # HDD
+        4 { "SSD" }  # SSD
         default {
             # Detects NVMe SSDs by checking for the term 'NVMe' in the model or friendly name
             if ($disk.Model -match "NVMe" -or $disk.FriendlyName -match "NVMe") {
@@ -182,14 +182,16 @@ foreach ($disk in $disks) {
             elseif ($disk.Model -match "USB" -or $disk.FriendlyName -match "USB" -or $disk.DeviceID -match "USB" -or $disk.Model -match "Cruzer|Flash|Thumb|Stick|Pen|Drive") {
                 "USB Drive"
             }
-            # Detects SSDs
+            # Default to SSD if 'SSD' is found in the model or friendly name
             elseif ($disk.Model -match "SSD" -or $disk.FriendlyName -match "SSD") {
                 "SSD"
             }
-            # Detects HDDs
+            # Default to HDD if 'HDD' is found in the model or friendly name
             elseif ($disk.Model -match "HDD" -or $disk.FriendlyName -match "HDD") {
                 "HDD"
-            } else {
+            }
+            # If no known match, categorize as Unknown
+            else {
                 "Unknown"
             }
         }
@@ -197,15 +199,27 @@ foreach ($disk in $disks) {
     
     # Logs the disk's friendly name
     Add-Content -Path $filename -Value "Drive: $($disk.FriendlyName)" -Encoding UTF8
+    
     # Logs the type of disk (SSD, HDD, NVMe, or USB Drive)
     Add-Content -Path $filename -Value "Type: $media" -Encoding UTF8
     
-    # Displays the serial number if available.
+    # Logs the serial number if available
     if ($disk.SerialNumber) {
         Add-Content -Path $filename -Value "Serial: $($disk.SerialNumber)" -Encoding UTF8
     }
-    
-    # Add a newline to separate each disk's information
+
+    # Logs the size of the disk in GB, if available
+    if ($disk.Size) {
+        $sizeGB = [math]::round($disk.Size / 1GB, 2)
+        Add-Content -Path $filename -Value "Size: $sizeGB GB" -Encoding UTF8
+    }
+
+    # Logs the operational status of the disk
+    if ($disk.OperationalStatus) {
+        Add-Content -Path $filename -Value "Status: $($disk.OperationalStatus)" -Encoding UTF8
+    }
+
+    # Adds a newline to separate each disk's information
     Add-Content -Path $filename -Value "" -Encoding UTF8
 }
 
