@@ -14,7 +14,7 @@ The PowerShell script collects a comprehensive set of system data, including:
 - **Graphics Card**: Information about the installed graphics card.
 - **Firewall Status**: Firewall status check.
 - **Antivirus**: Windows Defender and other installed antivirus status.
-- **Activation Status**: Checks if Windows is activated and includes the last 5 characters of the product key, if available.
+- **Activation Status**: Checks if Windows is activated.
 
 ### 🚀 How to Use
 
@@ -59,7 +59,7 @@ The generated report will include the following sections:
 - **[GRAPHICS CARD]**: Information about the installed graphics card.
 - **[FIREWALL STATUS]**: Firewall status for Domain, Public, and Private profiles.
 - **[ANTIVIRUS]**: Status of Windows Defender and other installed antivirus software.
-- **[ACTIVATION STATUS]**: Information about Windows activation, including the last 5 characters of the product key (if available).
+- **[ACTIVATION STATUS]**: Information about Windows activation.
 
 ### ⚠️ Requirements
 
