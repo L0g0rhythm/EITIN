@@ -1,4 +1,4 @@
-# IT Inventory with Privilege Elevation
+# EITIN - Elevated IT Inventory
 
 This repository contains a PowerShell script (`run_as_admin.ps1`) that automates the collection of detailed system information for IT inventory purposes. The goal is to streamline asset management by ensuring that the report is generated with elevated privileges.
 
