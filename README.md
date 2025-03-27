@@ -16,7 +16,6 @@ This repository contains a PowerShell script (`EITIN.ps1`) that automates the co
 - [Project Status](#-project-status)
 - [Security and Compliance](#-security-and-compliance)
 - [Contributions](#-contributions)
-- [Issues](#-issues)
 
 
 ## ✨ Features
