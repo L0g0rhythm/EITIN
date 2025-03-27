@@ -6,7 +6,7 @@ This repository contains a PowerShell script (`EITIN.ps1`) that automates the co
 ## Table of Contents
 
 - [Features](#-features)
-- [Requirements](#-Requirements)
+- [Requirements](#-requirements)
 - [Installation](#-installation)
 - [Usage](#-usage)
 - [Report Structure](#-report-structure)
