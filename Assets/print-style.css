@@ -1,0 +1,122 @@
+﻿/* EITIN_Modular/Assets/print-style.css - Styles for Print and PDF */
+
+/* --- General Page Settings --- */
+body {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff; /* White background for printing */
+  color: #000000; /* Black text for maximum legibility */
+  font-size: 11pt; /* Ideal font size for documents */
+  line-height: 1.4;
+}
+
+/* --- Main Container --- */
+.print-container {
+  max-width: 18cm; /* Approximate width of an A4 page with margins */
+  margin: 1cm auto; /* Center the content with margins */
+}
+
+/* --- Report Header --- */
+.report-title-printable {
+  text-align: center;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 15px;
+  margin-bottom: 30px;
+}
+
+.report-title-printable h1 {
+  margin: 0;
+  font-size: 24pt;
+}
+
+/* --- Report Footer --- */
+.report-footer-printable {
+  text-align: center;
+  padding-top: 20px;
+  margin-top: 40px;
+  font-size: 9pt;
+  color: #555;
+  border-top: 1px solid #ccc;
+}
+
+.report-footer-printable p {
+  margin: 4px 0;
+}
+
+/* --- Report Sections --- */
+.section {
+  margin-bottom: 25px;
+  /* Control page breaks for printing */
+  page-break-inside: avoid;
+}
+
+.section h2 {
+  font-size: 16pt;
+  color: #005a9e; /* A sober blue for titles */
+  border-bottom: 1px solid #005a9e;
+  padding-bottom: 8px;
+  margin-top: 0;
+  margin-bottom: 15px;
+  /* Avoid a title being left alone at the end of a page */
+  page-break-after: avoid;
+}
+
+.section h3 {
+  font-size: 13pt;
+  color: #333;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed #999;
+  padding-bottom: 5px;
+  page-break-after: avoid;
+}
+
+/* --- Tables --- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  page-break-inside: avoid; /* Try to keep the table on the same page */
+}
+
+th,
+td {
+  text-align: left;
+  padding: 6px 8px;
+  border: 1px solid #ccc; /* More visible borders for printing */
+  vertical-align: top;
+  font-size: 10pt;
+}
+
+th {
+  background-color: #f2f2f2; /* Subtle header background */
+  font-weight: bold;
+}
+
+.property-name {
+  font-weight: bold;
+  width: 35%;
+  background-color: #f9f9f9;
+}
+
+/* --- Print-Specific Rules --- */
+@media print {
+  body {
+    /* Remove any gradient and ensure a pure white background */
+    background-image: none !important;
+    background-color: #ffffff !important;
+  }
+
+  .print-container {
+    /* Remove margins and shadows to fill the print page */
+    margin: 0;
+    max-width: 100%;
+    box-shadow: none;
+  }
+
+  a {
+    text-decoration: none; /* Remove underline from links on print */
+    color: #000000;
+  }
+}
