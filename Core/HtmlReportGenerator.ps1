@@ -1,4 +1,4 @@
-﻿# EITIN_Modular/Core/HtmlReportGenerator.ps1
+# EITIN_Modular/Core/HtmlReportGenerator.ps1
 
 #region Glossário e Funções Auxiliares (Escopo do Script)
 $Global:EitinHtmlGlossary = @{
@@ -124,13 +124,12 @@ function Build-EitinHtmlReport {
         [void]$fullHtml.AppendLine("</head><body>")
 
         # --- Barra Lateral ---
-        [void]$fullHtml.AppendLine("    <div class='sidebar'><h2>Relatório EITIN</h2><ul id='sidebar-nav'>")
+        [void]$fullHtml.AppendLine("    <div class='sidebar'><h2>EITIN</h2><ul id='sidebar-nav'>")
         if ($null -ne $SectionTitlesForSidebar) { foreach ($title in $SectionTitlesForSidebar) { if (-not [string]::IsNullOrWhiteSpace($title)) { $sectionId = $title -replace '[^a-zA-Z0-9_]+', '-' -replace '_$', ''; [void]$fullHtml.AppendLine("            <li><a href='#$sectionId'>$([System.Security.SecurityElement]::Escape($title))</a></li>") } } }
         [void]$fullHtml.AppendLine("        </ul></div>")
         
         # --- Conteúdo Principal ---
         [void]$fullHtml.AppendLine("    <div class='main-content'>")
-        [void]$fullHtml.AppendLine("        <h1 class='main-report-title'>EITIN - Relatório de Inventário Consolidado</h1>") 
 
         # Define as seções que terão contêineres de rolagem.
         $scrollableSections = @(
@@ -175,7 +174,7 @@ function Build-EitinHtmlReport {
         # Monta o bloco de rodapé usando here-string para legibilidade
         $footerBlock = @"
         <footer class='report-footer'>
-           <p>EITIN - Relatório de Inventário de TI &copy; $(Get-Date -Format 'yyyy')</p>
+           <p>EITIN - Inventário de TI Elevado &copy; $(Get-Date -Format 'yyyy')</p>
            <p>Gerado para $([System.Security.SecurityElement]::Escape($ComputerName)) em $($ReportTimestamp) por $([System.Security.SecurityElement]::Escape($ScriptUser))</p>
            $($footerExecutionTimeInfo)
            <p>Desenvolvido por <a href='https://www.l0g0rhythm.com.br/' target='_blank' rel='noopener noreferrer' style='color: #3498db; text-decoration: none;'>L0g0rhythm</a></p>
@@ -246,7 +245,7 @@ function Build-EitinPrintableHtmlReport {
         [void]$fullHtml.AppendLine("    <div class='print-container'>")
         
         # MANTIDO: Título principal no topo do documento.
-        [void]$fullHtml.AppendLine("        <div class='report-title-printable'><h1>EITIN - Relatório de Inventário Consolidado</h1></div>")
+        [void]$fullHtml.AppendLine("        <div class='report-title-printable'><h1>EITIN - Inventário de TI Elevado</h1></div>")
         
         # Itera e anexa cada seção verticalmente
         if ($null -ne $SectionTitles) { 
@@ -272,7 +271,7 @@ function Build-EitinPrintableHtmlReport {
         }
 
         [void]$fullHtml.AppendLine("        <footer class='report-footer-printable'>")
-        [void]$fullHtml.AppendLine("            <p>EITIN - Relatório de Inventário de TI &copy; $(Get-Date -Format 'yyyy')</p>")
+        [void]$fullHtml.AppendLine("            <p>EITIN - Inventário de TI Elevado &copy; $(Get-Date -Format 'yyyy')</p>")
         [void]$fullHtml.AppendLine("            <p>Gerado para $([System.Security.SecurityElement]::Escape($ComputerName)) em $($ReportTimestamp) por $([System.Security.SecurityElement]::Escape($ScriptUser))</p>")
         [void]$fullHtml.AppendLine("           $($footerExecutionTimeInfo)")
         [void]$fullHtml.AppendLine("            <p style='font-size: 9pt; margin-top: 10px;'>Desenvolvido por <a href='https://www.l0g0rhythm.com.br/'>L0g0rhythm</a></p>")
