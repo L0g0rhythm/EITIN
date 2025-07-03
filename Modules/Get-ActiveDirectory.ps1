@@ -1,4 +1,4 @@
-﻿function Invoke-EitinActiveDirectoryInfo {
+function Invoke-EitinActiveDirectoryInfo {
     [CmdletBinding()]
     param()
 
@@ -73,7 +73,7 @@
             $dadosAD.Error = $errorMessage
         }
         
-        if ($null -eq $dadosAD.Error -and $dadosAD.PSObject.Properties['Error'] -ne $null) {
+        if ($null -eq $dadosAD.Error -and $null -ne $dadosAD.PSObject.Properties['Error']) {
             $tempObject = $dadosAD.PSObject.Copy()
             $tempObject.Properties.Remove('Error')
             return [PSCustomObject]$tempObject
