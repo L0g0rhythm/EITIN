@@ -1,4 +1,4 @@
-﻿function Get-SafeProperty {
+function Get-SafeProperty {
     [CmdletBinding()]
     param(
         [AllowNull()] # Modificado: Permite que $ObjectInstance seja nulo
