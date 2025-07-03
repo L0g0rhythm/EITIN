@@ -1,4 +1,4 @@
-﻿function Invoke-EitinNetworkInfo {
+function Invoke-EitinNetworkInfo {
     [CmdletBinding()]
     param()
 
@@ -6,91 +6,81 @@
         $networkAdaptersList = New-Object System.Collections.ArrayList
         
         try {
-            # Considera apenas adaptadores que estão "Up" (ativos)
-            $activeAdapters = Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Status -eq "Up" }
-
-            if ($activeAdapters) {
-                $allIpConfigurations = Get-NetIPConfiguration -ErrorAction SilentlyContinue
-                $allNetIPInterfaces = Get-NetIPInterface -ErrorAction SilentlyContinue # Necessário para o status do DHCP
-
-                foreach ($adapter in $activeAdapters) {
-                    $interfaceIndex = $adapter.InterfaceIndex
-                    $ipv4AddressesInfo = New-Object System.Collections.ArrayList
-                    $ipv4GatewayInfo = "Não Configurado"
-                    $dhcpEnabledInfo = "Não Aplicável"
-
-                    $ipConfig = $allIpConfigurations | Where-Object { $_.InterfaceIndex -eq $interfaceIndex } | Select-Object -First 1
+            $activeAdapterConfigs = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration -Filter "IPEnabled = 'TRUE'"
+            
+            if ($activeAdapterConfigs) {
+                foreach ($config in $activeAdapterConfigs) {
+                    $adapter = Get-CimInstance -ClassName Win32_NetworkAdapter -Filter "Index = $($config.Index)" | Select-Object -First 1
                     
-                    if ($ipConfig) {
-                        # Coleta apenas os endereços IPv4
-                        $validIPv4 = $ipConfig.IPv4Address | Where-Object { $_.AddressFamily -eq 'IPv4' -and $_.Address -notmatch "^169\.254\." }
-                        if ($validIPv4) {
-                            foreach ($ip in $validIPv4) {
-                                [void]$ipv4AddressesInfo.Add("$($ip.IPAddress) / $($ip.PrefixLength)") 
+                    if (-not $adapter) { continue }
+
+                    # This ensures that the code functions correctly even with a single IP address.
+                    $ipv4Addresses = @($config.IPAddress | Where-Object { $_ -like '*.*' -and $_ -notlike '169.254.*' })
+                    $subnets = @($config.IPSubnet)
+                    
+                    $ipv4AddressesInfo = New-Object System.Collections.ArrayList
+                    if ($ipv4Addresses.Count -gt 0) {
+                        for ($i = 0; $i -lt $ipv4Addresses.Count; $i++) {
+                            # It ensures that we have a corresponding subnet to prevent errors.
+                            if ($i -lt $subnets.Count) {
+                                [void]$ipv4AddressesInfo.Add("$($ipv4Addresses[$i]) / $($subnets[$i])")
                             }
                         }
-                        
-                        # Coleta apenas o Gateway IPv4
-                        $ipv4DefaultGatewayObject = Get-SafeProperty -ObjectInstance $ipConfig -PropertyName 'IPv4DefaultGateway' -DefaultValue $null
-                        if ($ipv4DefaultGatewayObject) {
-                            $gatewayAddress = Get-SafeProperty -ObjectInstance $ipv4DefaultGatewayObject -PropertyName 'NextHop'
-                            if ($gatewayAddress -ne "Não Encontrado" -and $gatewayAddress) { $ipv4GatewayInfo = $gatewayAddress }
-                        }
-                    } 
+                    }
 
-                    # Lógica para verificar o status do DHCP
-                    $netIPInterface = $allNetIPInterfaces | Where-Object { $_.InterfaceIndex -eq $interfaceIndex } | Select-Object -First 1
-                    if ($netIPInterface) {
-                        $dhcpStatusNetIP = Get-SafeProperty -ObjectInstance $netIPInterface -PropertyName 'Dhcp' -DefaultValue 'Disabled'
-                        $dhcpEnabledInfo = switch ($dhcpStatusNetIP) {
-                            "Enabled"  { "Sim" }
-                            "Disabled" { "Não" }
-                            default    { $dhcpStatusNetIP }
+                    $ipv4GatewayInfo = "Não Configurado"
+                    if ($config.DefaultIPGateway) {
+                        $firstIpv4Gateway = $config.DefaultIPGateway | Where-Object { $_ -like '*.*' } | Select-Object -First 1
+                        if ($firstIpv4Gateway) {
+                            $ipv4GatewayInfo = $firstIpv4Gateway
                         }
                     }
-                    
-                    # Lógica robusta e corrigida para a velocidade do link
-                    $linkSpeedValueRaw = Get-SafeProperty -ObjectInstance $adapter -PropertyName 'LinkSpeed'
-                    $friendlyLinkSpeed = "Não Encontrado"
-                    if ($linkSpeedValueRaw -ne "Não Encontrado" -and $null -ne $linkSpeedValueRaw) {
+
+                    $dhcpEnabledInfo = if ($config.DHCPEnabled) { "Sim" } else { "Não" }
+
+                    $friendlyLinkSpeed = "Não Disponível"
+                    if ($adapter.Speed) {
                         try {
-                            $speedBits = [System.Convert]::ToUInt64($linkSpeedValueRaw) # Usa UInt64 para números grandes
+                            $speedBits = [System.Convert]::ToUInt64($adapter.Speed)
                             if ($speedBits -gt 0) {
                                 if ($speedBits -ge 1000000000) { # Gbps
                                     $friendlyLinkSpeed = "{0:N0} Gbps" -f ($speedBits / 1GB)
                                 } elseif ($speedBits -ge 1000000) { # Mbps
                                     $friendlyLinkSpeed = "{0:N0} Mbps" -f ($speedBits / 1MB)
-                                } else { # Kbps ou menos
+                                } else { # Kbps
                                     $friendlyLinkSpeed = "{0:N0} Kbps" -f ($speedBits / 1KB)
                                 }
                             }
                         } catch {
-                             $friendlyLinkSpeed = "$($linkSpeedValueRaw)"
+                            $friendlyLinkSpeed = "$($adapter.Speed)"
                         }
                     }
 
                     $adapterDetails = [ordered]@{
-                        "Nome do Adaptador"                = Get-SafeProperty $adapter 'Name'
-                        "Descrição da Interface"           = Get-SafeProperty $adapter 'InterfaceDescription'
-                        "Status"                           = Get-SafeProperty $adapter 'Status'
-                        "Endereço MAC"                     = Get-SafeProperty $adapter 'MacAddress'
+                        "Nome do Adaptador"                = $adapter.Name
+                        "Descrição da Interface"           = $adapter.Description
+                        "Status"                           = "Up"
+                        # Improvement: Handles cases where the MAC address is missing.
+                        "Endereço MAC"                     = if ([string]::IsNullOrWhiteSpace($adapter.MACAddress)) { "N/A" } else { $adapter.MACAddress }
                         "Velocidade do Link"               = $friendlyLinkSpeed
-                        "Endereços IPv4"                   = if ($ipv4AddressesInfo.Count -gt 0) { $ipv4AddressesInfo.ToArray() -join "; " } else { "Não Configurado" } 
+                        "Endereços IPv4"                   = if ($ipv4AddressesInfo.Count -gt 0) { $ipv4AddressesInfo.ToArray() -join "; " } else { "Não Configurado" }
                         "Gateway IPv4 Padrão"              = $ipv4GatewayInfo
                         "DHCP Habilitado"                  = $dhcpEnabledInfo
                     }
                     [void]$networkAdaptersList.Add([PSCustomObject]$adapterDetails)
                 }
-            } else {
+            } 
+            
+            if ($networkAdaptersList.Count -eq 0) {
                 return [PSCustomObject]@{ "Informação" = "Nenhum adaptador de rede ativo encontrado." }
             }
         }
         catch {
-            $errorMessage = "Erro ao coletar informações de rede: $($_.Exception.Message)"
+            $errorMessage = "Erro ao coletar informações de rede via WMI: $($_.Exception.Message)"
             Write-Warning $errorMessage
             return [PSCustomObject]@{ Error = $errorMessage }
         }
 
         return $networkAdaptersList.ToArray()
-     } 
+    }
 }
