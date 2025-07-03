@@ -2,7 +2,7 @@ param()
 
 #region Self-Elevation
 # Checks if the script is running with Administrator privileges and restarts it if not.
-function Ensure-Administrator {
+function Confirm-AdministratorPrivilege {
     $currentUserIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $windowsPrincipal = [Security.Principal.WindowsPrincipal]$currentUserIdentity
 
@@ -79,7 +79,7 @@ function Invoke-EitinCollectionModule {
                 if (($moduleScriptName -eq "Get-ActiveDirectory.ps1" -or $moduleScriptName -eq "Get-OfficeLicenseInfo.ps1") -and $null -eq $moduleData) {
                     Write-EitinStep -Message "Section '$sectionTitle' skipped (Not Applicable)." -Status "INFO"
                     $moduleData = $null # Ensure nothing is logged for this section.
-                } elseif ($moduleData -is [PSCustomObject] -and $moduleData.PSObject.Properties['Error'] -ne $null -and $moduleData.Error) {
+                } elseif ($moduleData -is [PSCustomObject] -and $null -ne $moduleData.PSObject.Properties['Error'] -and $moduleData.Error) {
                     $moduleError = "Module '$sectionTitle' reported an error: $($moduleData.Error)"
                     $sectionExecutionSuccess = $false
                 }
@@ -111,10 +111,9 @@ function Invoke-EitinCollectionModule {
 # --- Main Script Execution ---
 
 $Global:EITIN_SCRIPT_START_TIME = Get-Date
-$PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
 
 # 1. Ensure administrator privileges and get user identity.
-$currentUserIdentity = Ensure-Administrator
+$currentUserIdentity = Confirm-AdministratorPrivilege
 
 try {
     # Set console encoding to handle special characters correctly.
@@ -183,7 +182,7 @@ $ExecutionTimeSpan = $CurrentEndTime - $Global:EITIN_SCRIPT_START_TIME
 
 $logFilePaths = $null
 try {
-    $logFilePaths = Finalize-EitinLogs -ExecutionTimeSpanForReport $ExecutionTimeSpan -ScriptRootPath $PSScriptRoot
+    $logFilePaths = Complete-EitinLogs -ExecutionTimeSpanForReport $ExecutionTimeSpan -ScriptRootPath $PSScriptRoot
     Write-EitinStep -Message "Reports finalized successfully." -Status "SUCCESS"
 }
 catch {
