@@ -1,139 +1,228 @@
-﻿function Invoke-EitinMonitorsInfo {
+function Invoke-EitinMonitorsInfo {
     [CmdletBinding()]
     param()
 
     process {
-        $monitorsList = New-Object System.Collections.ArrayList
+        #region Win32 API C# Helper
+        $csharpCode = @"
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Management.Automation;
 
-        function Decode-MonitorByteArray {
-            param($ByteArray)
-            if ($ByteArray -and ($ByteArray -is [array]) -and $ByteArray.Count -gt 0) {
-                $decodedString = ([System.Text.Encoding]::Default.GetString($ByteArray).Trim([char]0).Trim())
-                if ($decodedString -eq "0" -or [string]::IsNullOrWhiteSpace($decodedString)) { return $null }
-                return $decodedString
-            } else { return $null }
+namespace Win32
+{
+    public static class DisplayConfig
+    {
+        // All structs and enums must be defined BEFORE they are used in DllImport signatures.
+
+        #region Structs
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINTL { public int x; public int y; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_RATIONAL { public uint Numerator; public uint Denominator; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_PATH_SOURCE_INFO {
+            public uint adapterId_low;
+            public uint adapterId_high;
+            public uint id;
+            public uint modeInfoIdx;
+            public uint statusFlags;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_PATH_TARGET_INFO {
+            public uint adapterId_low;
+            public uint adapterId_high;
+            public uint id;
+            public uint modeInfoIdx;
+            public DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY outputTechnology;
+            public DISPLAYCONFIG_ROTATION rotation;
+            public DISPLAYCONFIG_SCALING scaling;
+            public DISPLAYCONFIG_RATIONAL refreshRate;
+            public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
+            public bool targetAvailable;
+            public uint statusFlags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_PATH_INFO
+        {
+            public DISPLAYCONFIG_PATH_SOURCE_INFO sourceInfo;
+            public DISPLAYCONFIG_PATH_TARGET_INFO targetInfo;
+            public uint flags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_TARGET_MODE {
+            public DISPLAYCONFIG_VIDEO_SIGNAL_INFO videoSignalInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_SOURCE_MODE {
+            public uint width;
+            public uint height;
+            public DISPLAYCONFIG_PIXELFORMAT pixelFormat;
+            public POINTL position;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct UnionDisplayConfigModeInfo {
+            [FieldOffset(0)]
+            public DISPLAYCONFIG_TARGET_MODE targetMode;
+            [FieldOffset(0)]
+            public DISPLAYCONFIG_SOURCE_MODE sourceMode;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_MODE_INFO {
+            public DISPLAYCONFIG_MODE_INFO_TYPE infoType;
+            public uint id;
+            public uint adapterId_low;
+            public uint adapterId_high;
+            public UnionDisplayConfigModeInfo modeInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_VIDEO_SIGNAL_INFO {
+            public ulong pixelRate;
+            public DISPLAYCONFIG_RATIONAL hSyncFreq;
+            public DISPLAYCONFIG_RATIONAL vSyncFreq;
+            public DISPLAYCONFIG_2DREGION activeSize;
+            public DISPLAYCONFIG_2DREGION totalSize;
+            public uint videoStandard;
+            public DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DISPLAYCONFIG_2DREGION { public uint cx; public uint cy; }
+        #endregion
+
+        #region Enums
+        public enum DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY : uint { OTHER = 4294967295, HD15 = 0, SVIDEO = 1, COMPOSITE_VIDEO = 2, COMPONENT_VIDEO = 3, DVI = 4, HDMI = 5, LVDS = 6, D_JPN = 8, SDI = 9, DISPLAYPORT_EXTERNAL = 10, DISPLAYPORT_EMBEDDED = 11, UDI_EXTERNAL = 12, UDI_EMBEDDED = 13, SDTVDONGLE = 14, MIRACAST = 15, INTERNAL = 2147483648, BNC = 2147483648 }
+        public enum DISPLAYCONFIG_ROTATION : uint { IDENTITY = 1, ROTATE90 = 2, ROTATE180 = 3, ROTATE270 = 4 }
+        public enum DISPLAYCONFIG_SCALING : uint { IDENTITY = 1, CENTERED = 2, STRETCHED = 3, ASPECTRATIOCENTEREDMAX = 4, CUSTOM = 5, PREFERRED = 128 }
+        public enum DISPLAYCONFIG_SCANLINE_ORDERING : uint { UNspecified = 0, PROGRESSIVE = 1, INTERLACED = 2, INTERLACED_UPPERFIELDFIRST = 2, INTERLACED_LOWERFIELDFIRST = 3 }
+        public enum DISPLAYCONFIG_MODE_INFO_TYPE : uint { SOURCE = 1, TARGET = 2, DESKTOP_IMAGE = 3 }
+        public enum DISPLAYCONFIG_PIXELFORMAT : uint { PIXELFORMAT_8BPP = 1, PIXELFORMAT_16BPP = 2, PIXELFORMAT_24BPP = 3, PIXELFORMAT_32BPP = 4, PIXELFORMAT_NONGDI = 5 }
+        #endregion
+
+        #region DllImports
+        [DllImport("user32.dll")]
+        public static extern int GetDisplayConfigBufferSizes(uint flags, out uint numPathArrayElements, out uint numModeInfoArrayElements);
+
+        [DllImport("user32.dll")]
+        public static extern int QueryDisplayConfig(uint flags, ref uint numPathArrayElements, [Out] DISPLAYCONFIG_PATH_INFO[] pathInfoArray, ref uint numModeInfoArrayElements, [Out] DISPLAYCONFIG_MODE_INFO[] modeInfoArray, IntPtr currentTopologyId);
+        #endregion
+
+        public static List<PSObject> GetDisplayInfo()
+        {
+            var results = new List<PSObject>();
+            
+            uint pathCount;
+            uint modeCount;
+            GetDisplayConfigBufferSizes(1, out pathCount, out modeCount);
+
+            if (pathCount == 0) return results;
+
+            var displayPaths = new DISPLAYCONFIG_PATH_INFO[pathCount];
+            var displayModes = new DISPLAYCONFIG_MODE_INFO[modeCount];
+            QueryDisplayConfig(1, ref pathCount, displayPaths, ref modeCount, displayModes, IntPtr.Zero);
+
+            for (int i = 0; i < pathCount; i++)
+            {
+                if (displayPaths[i].targetInfo.targetAvailable &&
+                    displayPaths[i].sourceInfo.modeInfoIdx < modeCount &&
+                    displayPaths[i].targetInfo.modeInfoIdx < modeCount)
+                {
+                    var sourceMode = displayModes[displayPaths[i].sourceInfo.modeInfoIdx].modeInfo.sourceMode;
+                    var targetMode = displayModes[displayPaths[i].targetInfo.modeInfoIdx].modeInfo.targetMode;
+                    
+                    var psObj = new System.Management.Automation.PSObject();
+                    psObj.Properties.Add(new System.Management.Automation.PSNoteProperty("Resolution", string.Format("{0}x{1}", sourceMode.width, sourceMode.height)));
+                    psObj.Properties.Add(new System.Management.Automation.PSNoteProperty("RefreshRate", Math.Round((double)targetMode.videoSignalInfo.vSyncFreq.Numerator / targetMode.videoSignalInfo.vSyncFreq.Denominator, 0)));
+                    
+                    results.Add(psObj);
+                }
+            }
+            return results;
+        }
+    }
+}
+"@
+        #endregion
 
         try {
-            $wmiMonitors = Get-WmiObject -Namespace root\wmi -Class WmiMonitorID -ErrorAction Stop 
-            $videoControllers = Get-CimInstance -ClassName Win32_VideoController -Property CurrentHorizontalResolution, CurrentVerticalResolution, DeviceID, Name, CurrentRefreshRate -ErrorAction SilentlyContinue 
-            
-            if ($wmiMonitors) {
-                $monitorIndex = 0
-                foreach ($monitorWmiInstance in $wmiMonitors) {
-                    $manufacturerDecoded = Decode-MonitorByteArray $monitorWmiInstance.ManufacturerName 
-                    $nameDecoded = Decode-MonitorByteArray $monitorWmiInstance.UserFriendlyName 
-                    $serialDecoded = Decode-MonitorByteArray $monitorWmiInstance.SerialNumberID 
-                    
-                    $finalName = if (-not [string]::IsNullOrWhiteSpace($nameDecoded)) { $nameDecoded } else { "Monitor $($monitorIndex + 1)" }
-                    $finalManufacturer = if (-not [string]::IsNullOrWhiteSpace($manufacturerDecoded)) { $manufacturerDecoded } else { "Não Encontrado" }
-                    $finalSerial = if (-not [string]::IsNullOrWhiteSpace($serialDecoded)) { $serialDecoded } else { "Não Encontrado" }
+            # Suppress verbose output from Add-Type
+            $null = Add-Type -TypeDefinition $csharpCode -PassThru -ErrorAction Stop
+        } catch {
+            $psError = $_.Exception.Message
+            Write-Error "Falha ao compilar o código de apoio da API do Windows. Não é possível continuar com a precisão total. Detalhes: $psError"
+            return
+        }
+        
+        $displayApiInfo = [Win32.DisplayConfig]::GetDisplayInfo()
 
-                    $resolutionString = "Resolução Indisponível" 
-                    $resolutionNote = "*Verificação inicial WMI para resolução indisponível."
-                    $refreshRateString = "Não Encontrada"
-                    $sizeInchesString = "Não Encontrado"
+        $monitorsList = New-Object System.Collections.ArrayList
+        $wmiMonitors = Get-WmiObject -Namespace 'root\wmi' -Class 'WmiMonitorID' -ErrorAction SilentlyContinue
+        
+        if ($wmiMonitors) {
+            for ($i = 0; $i -lt $wmiMonitors.Count; $i++) {
+                if ($i -ge $displayApiInfo.Count) { continue } 
 
-                    $hSizeCmVal = $monitorWmiInstance.MaxHorizontalImageSize; $vSizeCmVal = $monitorWmiInstance.MaxVerticalImageSize
-                    if ($hSizeCmVal -and $vSizeCmVal -and $hSizeCmVal -gt 0 -and $vSizeCmVal -gt 0) {
-                        try {
-                            $diagonalCm = [Math]::Sqrt([Math]::Pow([double]$hSizeCmVal, 2) + [Math]::Pow([double]$vSizeCmVal, 2))
-                            $diagonalInches = [Math]::Round($diagonalCm / 2.54, 1)
-                            $sizeInchesString = "$($diagonalInches) polegadas ($($hSizeCmVal)cm x $($vSizeCmVal)cm)"
-                        } catch { $sizeInchesString = "Erro ao Calcular Tamanho"}
-                    }
+                $monitorWmi = $wmiMonitors[$i]
+                $apiInfo = $displayApiInfo[$i]
 
-                    $foundResViaVC = $false
-                    if ($videoControllers) {
-                        if ($monitorIndex -lt $videoControllers.Count) {
-                            $vc = $videoControllers[$monitorIndex]
-                            $resH_vc = Get-SafeProperty $vc 'CurrentHorizontalResolution' ""; $resV_vc = Get-SafeProperty $vc 'CurrentVerticalResolution' ""; $currentRefreshRate_vc = Get-SafeProperty $vc 'CurrentRefreshRate' ""
-                            if ($resH_vc -and $resV_vc -and $resH_vc -ne "0" -and $resV_vc -ne "0" -and $resH_vc -ne "Not Found" -and $resV_vc -ne "Not Found") {
-                                $resolutionString = "$($resH_vc)x$($resV_vc)"; $resolutionNote = "*Resolução de Win32_VideoController (por índice)."; $foundResViaVC = $true
-                                if ($currentRefreshRate_vc -and $currentRefreshRate_vc -ne "0" -and $currentRefreshRate_vc -ne "Not Found") {
-                                    $refreshRateString = "$($currentRefreshRate_vc) Hz"
-                                }
-                            }
-                        }
-                        if (-not $foundResViaVC) { 
-                            foreach ($vc_alt in $videoControllers) {
-                                $resH_alt = Get-SafeProperty $vc_alt 'CurrentHorizontalResolution' ""; $resV_alt = Get-SafeProperty $vc_alt 'CurrentVerticalResolution' ""; $currentRefreshRate_alt = Get-SafeProperty $vc_alt 'CurrentRefreshRate' ""
-                                if ($resH_alt -and $resV_alt -and $resH_alt -ne "0" -and $resV_alt -ne "0" -and $resH_alt -ne "Not Found" -and $resV_alt -ne "Not Found") {
-                                    $resolutionString = "$($resH_alt)x$($resV_alt)"; $resolutionNote = "*Resolução da GPU ativa '$($vc_alt.Name)'."; $foundResViaVC = $true
-                                    if ($currentRefreshRate_alt -and $currentRefreshRate_alt -ne "0" -and $currentRefreshRate_alt -ne "Not Found") {
-                                        $refreshRateString = "$($currentRefreshRate_alt) Hz"
-                                    }
-                                    break 
-                                }
-                            }
-                        }
-                    }
+                $refreshRateString = "$($apiInfo.RefreshRate) Hz"
+                $resolutionString = $apiInfo.Resolution
 
-                    if (($resolutionString -eq "Resolução Indisponível")) {
-                        try {
-                            $desktopMonitors = Get-CimInstance Win32_DesktopMonitor -ErrorAction SilentlyContinue
-                            if ($desktopMonitors) {
-                                $targetDm = $null
-                                if ($wmiMonitors.Count -eq 1 -and $desktopMonitors.Count -ge 1) {
-                                    $targetDm = $desktopMonitors | Where-Object { $_.PNPDeviceID -eq $monitorWmiInstance.InstanceName } | Select-Object -First 1
-                                    if (-not $targetDm -and $desktopMonitors.Count -eq 1) { $targetDm = $desktopMonitors | Select-Object -First 1} 
-                                    if (-not $targetDm) { $targetDm = $desktopMonitors | Sort-Object -Property DeviceID | Select-Object -First 1 }
-                                } elseif ($desktopMonitors.Count -eq 1) { $targetDm = $desktopMonitors | Select-Object -First 1 }
-                                if ($targetDm) {
-                                    $resH_dm = Get-SafeProperty $targetDm 'ScreenWidth' ""; $resV_dm = Get-SafeProperty $targetDm 'ScreenHeight' ""
-                                    if ($resH_dm -and $resV_dm -and $resH_dm -ne "0" -and $resV_dm -ne "0" -and $resH_dm -ne "Not Found" -and $resV_dm -ne "Not Found") {
-                                        $resolutionString = "$($resH_dm)x$($resV_dm)"; $resolutionNote = "*Resolução de Win32_DesktopMonitor."
-                                    } else {
-                                        $resolutionString = "Dados de resolução do Desktop incompletos"; $resolutionNote = "*Win32_DesktopMonitor alvo mas Larg/Alt ausentes/zero para $($targetDm.DeviceID). L: '$resH_dm', A: '$resV_dm'"
-                                    }
-                                } elseif ($desktopMonitors.Count -gt 1 -and $wmiMonitors.Count -gt 1) { 
-                                     $allResolutions = $desktopMonitors | ForEach-Object { "$($_.ScreenWidth)x$($_.ScreenHeight)" } | Get-Unique
-                                     if ($allResolutions.Count -eq 1 -and $allResolutions[0] -notmatch "0x0|x0|^\s*x\s*$|^Not FoundxNot Found$|^x$") { 
-                                         $resolutionString = $allResolutions[0]; $resolutionNote = "*Resolução de Win32_DesktopMonitor (todos lógicos iguais)."
-                                     } else {
-                                        $resolutionString = "Ver Seção GPU ou Múltiplas Resoluções"; $resolutionNote = "*Múltiplas resoluções via Win32_DesktopMonitor ($($allResolutions -join '; ')). Ver seção GPU."
-                                     }
-                                }
-                            }
-                        } catch { Write-Warning "DEBUG MONITOR: Erro ao consultar Win32_DesktopMonitor: $($_.Exception.Message)" }
-                    }
-                    
-                    $monitorDetails = [ordered]@{
-                        "Nome do Monitor"              = $finalName
-                        "Fabricante do Monitor"        = $finalManufacturer
-                        "Número de Série (Monitor)"    = $finalSerial
-                        "Resolução Detectada"          = $resolutionString
-                        "Taxa de Atualização"          = $refreshRateString 
-                        "Tamanho Físico"               = $sizeInchesString  
-                        "Observação sobre Resolução"   = $resolutionNote
-                    }
-                    [void]$monitorsList.Add([PSCustomObject]$monitorDetails)
-                    $monitorIndex++ 
+                $nameBytes = $monitorWmi.UserFriendlyName
+                $name = if ($nameBytes) { ([System.Text.Encoding]::Default.GetString($nameBytes).Trim([char]0).Trim()) } else { $null }
+
+                $manufacturerBytes = $monitorWmi.ManufacturerName
+                $manufacturer = if ($manufacturerBytes) { ([System.Text.Encoding]::Default.GetString($manufacturerBytes).Trim([char]0).Trim()) } else { $null }
+
+                $serialBytes = $monitorWmi.SerialNumberID
+                $serial = if ($serialBytes) { ([System.Text.Encoding]::Default.GetString($serialBytes).Trim([char]0).Trim()) } else { $null }
+
+                $monitorDetails = @{
+                    "Nome do Monitor"           = if (-not [string]::IsNullOrWhiteSpace($name)) { $name } else { "Monitor Genérico" }
+                    "Fabricante do Monitor"     = if (-not [string]::IsNullOrWhiteSpace($manufacturer)) { $manufacturer } else { "Não Encontrado" }
+                    # Check if serial is null, whitespace, OR just "0" before showing it.
+                    "Número de Série (Monitor)" = if (-not [string]::IsNullOrWhiteSpace($serial) -and $serial -ne '0') { $serial } else { "Não Encontrado" }
+                    "Resolução Detectada"       = $resolutionString
+                    "Taxa de Atualização"       = $refreshRateString
                 }
-            } else {
-                 [void]$monitorsList.Add([PSCustomObject]@{ 
-                    "Nome do Monitor" = "Nenhuma Instância WMI de Monitor Encontrada"
-                    "Observação"      = "Não foi possível obter detalhes do monitor via WMI (WmiMonitorID)."
-                    "Error"           = "WmiMonitorID não retornou dados."
-                })
+                [void]$monitorsList.Add((New-Object PSObject -Property $monitorDetails))
             }
         }
-        catch {
-            $errorMessage = "Erro ao coletar informações do monitor: $($_.Exception.Message)" 
-            Write-Warning $errorMessage
-            return @([PSCustomObject]@{ 
-                "Nome do Monitor" = "Erro na Coleta" 
-                "Observação"      = $errorMessage 
-                "Error"           = $errorMessage 
-            })
+        else {
+             foreach($apiInfo in $displayApiInfo) {
+                 $monitorDetails = @{
+                    "Nome do Monitor"           = "Monitor Desconhecido"
+                    "Fabricante do Monitor"     = "Não Encontrado"
+                    "Número de Série (Monitor)" = "Não Encontrado"
+                    "Resolução Detectada"       = $apiInfo.Resolution
+                    "Taxa de Atualização"       = "$($apiInfo.RefreshRate) Hz"
+                }
+                [void]$monitorsList.Add((New-Object PSObject -Property $monitorDetails))
+             }
         }
 
         if ($monitorsList.Count -eq 0) {
-            [void]$monitorsList.Add([PSCustomObject]@{
-                    "Nome do Monitor" = "Nenhum Monitor Detectado"
-                    "Observação"      = "Nenhum monitor foi detectado pelo script após todas as tentativas."
-                })
+            $errorDetails = @{
+                "Fabricante do Monitor"     = "-"
+                "Nome do Monitor"           = "Nenhum Monitor Detectado"
+                "Número de Série (Monitor)" = "-"
+                "Resolução Detectada"       = "-"
+                "Taxa de Atualização"       = "-"
+            }
+            [void]$monitorsList.Add((New-Object PSObject -Property $errorDetails))
         }
-        return $monitorsList.ToArray()
-    }    
+        
+        # Use Select-Object to enforce the final property order for consistent display.
+        return $monitorsList.ToArray() | Select-Object "Fabricante do Monitor", "Nome do Monitor", "Número de Série (Monitor)", "Resolução Detectada", "Taxa de Atualização"
+    }
 }
