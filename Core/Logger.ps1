@@ -1,4 +1,4 @@
-﻿# EITIN_Modular/Core/Logger.ps1 - Versão Final Consolidada e Aprimorada
+# EITIN_Modular/Core/Logger.ps1 - Versão Final Consolidada e Aprimorada
 
 #region Global Variables for Logging
 $Global:EitinLogTxtPath = $null
@@ -112,7 +112,7 @@ function Add-EitinLogSection {
     }
 }
 
-function Finalize-EitinLogs {
+function Complete-EitinLogs {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)] [System.TimeSpan]$ExecutionTimeSpanForReport,
