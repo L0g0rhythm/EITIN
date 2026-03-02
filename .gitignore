@@ -1,0 +1,18 @@
+# EITIN generated files
+Logs/
+!Logs/.gitkeep
+
+# PowerShell Temp files
+*.log
+*.tmp
+*.bak
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# OS X
+.DS_Store

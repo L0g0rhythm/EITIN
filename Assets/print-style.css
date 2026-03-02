@@ -1,0 +1,131 @@
+﻿body {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff;
+  color: #000000;
+  font-size: 11pt;
+  line-height: 1.4;
+}
+
+.print-container {
+  max-width: 18cm; /* Margens padrão A4 */
+  margin: 1.5cm auto; /* Espaçamento generoso */
+}
+
+/* Cabeçalho do relatório com identidade visual */
+.report-title-printable {
+  text-align: center;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 15px;
+  margin-bottom: 30px;
+}
+
+.report-title-printable h1 {
+  margin: 0;
+  font-size: 24pt;
+  font-family:
+    "Georgia", serif; /* Fonte mais clássica para o título principal */
+}
+
+/* Seções bem definidas */
+.section {
+  margin-bottom: 25px;
+  page-break-inside: avoid; /* Evita quebrar seções */
+}
+
+.section h2 {
+  font-size: 16pt;
+  font-family: "Georgia", serif; /* Consistência na tipografia de título */
+  color: #005a9e; /* Azul sóbrio para títulos, como no seu original */
+  border-bottom: 1px solid #005a9e;
+  padding-bottom: 8px;
+  margin-top: 0;
+  margin-bottom: 15px;
+  page-break-after: avoid; /* Evita títulos órfãos */
+}
+
+.section h3 {
+  font-size: 13pt;
+  color: #333;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed #999;
+  padding-bottom: 5px;
+  page-break-after: avoid;
+}
+
+/* Tabelas claras e legíveis - ESTILO PADRÃO */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  page-break-inside: avoid;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px 10px; /* Mais padding para respirar */
+  border: 1px solid #ccc;
+  vertical-align: top;
+  font-size: 10pt;
+}
+
+th {
+  background-color: #f2f2f2; /* Fundo sutil no cabeçalho */
+  font-weight: bold;
+}
+
+/* NOVO: Nível de compactação médio para tabelas com 6-7 colunas */
+.table-medium th,
+.table-medium td {
+  font-size: 9.5pt; /* Redução sutil na fonte */
+  padding: 7px 9px; /* Redução sutil no padding */
+}
+
+/* OTIMIZAÇÃO RENOMEADA: Nível máximo para tabelas com 8+ colunas */
+.table-compact th,
+.table-compact td {
+  font-size: 9pt; /* Reduz o tamanho da fonte para economizar espaço */
+  padding: 6px 8px; /* Reduz o padding interno das células */
+  word-break: break-word; /* FORÇA a quebra de palavras longas (ESSENCIAL) */
+  white-space: normal; /* Garante que o texto possa quebrar em múltiplas linhas */
+  hyphens: auto; /* (Opcional) Melhora a hifenização em navegadores que suportam */
+}
+
+.property-name {
+  font-weight: bold;
+  width: 35%;
+  background-color: #f9f9f9;
+}
+
+/* Rodapé elegante */
+.report-footer-printable {
+  text-align: center;
+  padding-top: 20px;
+  margin-top: 40px;
+  font-size: 9pt;
+  color: #555;
+  border-top: 1px solid #ccc;
+}
+
+.report-footer-printable p {
+  margin: 4px 0;
+}
+
+@media print {
+  body {
+    background-image: none !important;
+    background-color: #ffffff !important;
+  }
+  .print-container {
+    margin: 0;
+    max-width: 100%;
+    box-shadow: none;
+  }
+  a {
+    text-decoration: none;
+    color: #000000;
+  }
+}

@@ -1,0 +1,134 @@
+﻿{
+  "Settings": {
+    "AutoCloseConsole": true,
+    "Reports": {
+      "GenerateTxt": false,
+      "GenerateHtmlInteractive": true,
+      "GenerateHtmlPrintable": false,
+      "GenerateCsv": false
+    }
+  },
+  "Modules": [
+    {
+      "title": "Identificação",
+      "script": "Get-Identification.ps1",
+      "function": "Invoke-EitinIdentificationInfo",
+      "enabled": true
+    },
+    {
+      "title": "Tipo de Equipamento",
+      "script": "Get-EquipmentType.ps1",
+      "function": "Invoke-EitinEquipmentTypeInfo",
+      "enabled": true
+    },
+    {
+      "title": "Informações do Sistema",
+      "script": "Get-SystemInfo.ps1",
+      "function": "Invoke-EitinSystemInfoInfo",
+      "enabled": true
+    },
+
+    {
+      "title": "Processador",
+      "script": "Get-Processor.ps1",
+      "function": "Invoke-EitinProcessorInfo",
+      "enabled": true
+    },
+    {
+      "title": "Memória RAM",
+      "script": "Get-RamMemory.ps1",
+      "function": "Invoke-EitinRamMemoryInfo",
+      "enabled": true
+    },
+    {
+      "title": "Armazenamento",
+      "script": "Get-Storage.ps1",
+      "function": "Invoke-EitinStorageInfo",
+      "enabled": true
+    },
+    {
+      "title": "Rede",
+      "script": "Get-Network.ps1",
+      "function": "Invoke-EitinNetworkInfo",
+      "enabled": true
+    },
+    {
+      "title": "Softwares Instalados (Não-Microsoft)",
+      "script": "Get-InstalledSoftware.ps1",
+      "function": "Invoke-EitinInstalledSoftwareInfo",
+      "enabled": true
+    },
+    {
+      "title": "Licenças Microsoft Office",
+      "script": "Get-OfficeLicenseInfo.ps1",
+      "function": "Invoke-EitinOfficeLicenseInfoInfo",
+      "enabled": true
+    },
+    {
+      "title": "Produto do Sistema (Fabricante/Modelo)",
+      "script": "Get-SystemProduct.ps1",
+      "function": "Invoke-EitinSystemProductInfo",
+      "enabled": true
+    },
+    {
+      "title": "BIOS e Firmware",
+      "script": "Get-BiosFirmware.ps1",
+      "function": "Invoke-EitinBiosFirmwareInfo",
+      "enabled": true
+    },
+    {
+      "title": "Monitores",
+      "script": "Get-Monitors.ps1",
+      "function": "Invoke-EitinMonitorsInfo",
+      "enabled": true
+    },
+    {
+      "title": "Periféricos Conectados",
+      "script": "Get-Peripherals.ps1",
+      "function": "Invoke-EitinPeripheralsInfo",
+      "enabled": true
+    },
+    {
+      "title": "Últimas 15 Atualizações do Windows",
+      "script": "Get-WindowsUpdates.ps1",
+      "function": "Invoke-EitinWindowsUpdatesInfo",
+      "enabled": true
+    },
+    {
+      "title": "Diretório Ativo (Active Directory)",
+      "script": "Get-ActiveDirectory.ps1",
+      "function": "Invoke-EitinActiveDirectoryInfo",
+      "enabled": true
+    },
+    {
+      "title": "Placa de Vídeo (GPU)",
+      "script": "Get-GraphicsCard.ps1",
+      "function": "Invoke-EitinGraphicsCardInfo",
+      "enabled": true
+    },
+    {
+      "title": "Status do Firewall",
+      "script": "Get-FirewallStatus.ps1",
+      "function": "Invoke-EitinFirewallStatusInfo",
+      "enabled": true
+    },
+    {
+      "title": "Status do Antivírus",
+      "script": "Get-AntivirusStatus.ps1",
+      "function": "Invoke-EitinAntivirusStatusInfo",
+      "enabled": true
+    },
+    {
+      "title": "Status de Ativação do Windows",
+      "script": "Get-WindowsActivation.ps1",
+      "function": "Invoke-EitinWindowsActivationInfo",
+      "enabled": true
+    },
+    {
+      "title": "Verificação de Conformidade de Segurança",
+      "script": "Get-SecurityCompliance.ps1",
+      "function": "Invoke-EitinSecurityComplianceInfo",
+      "enabled": true
+    }
+  ]
+}
